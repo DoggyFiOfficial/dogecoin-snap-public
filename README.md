@@ -103,17 +103,6 @@ Coming soon, stay tuned!
 ### 5. Make Custom Doginals (Coming Soon!)
 Coming soon, stay tuned!
 
-### 1. Knowing your protocol
-
-This might sound obvious, but you need to know the details of how the non-EVM chain you're trying to add to MetaMask works. How are addresses generated? How are transactions created and broadcast? etc.
-
-### 2. Figuring out APIs and libraries
-
-You won't be able to run a full node for your protocol inside MetaMask, so you'll need an API to connect to in order to figure out balances, broadcast transactions, etc. For the Dogecoin snap tutorial, we're using the [Tatum Dogecoin API](https://apidoc.tatum.io/tag/Dogecoin/).
-   
-Next, you probably won't want to do all the signing and transaction building manually: you'll want to figure out which JavaScript library or libraries implement your protocol the best. You'll want to make sure that these libraries work within the [constraints of the Snaps execution environment](https://docs.metamask.io/snaps/concepts/execution-environment/), which is based on [Secure ECMAScript (SES)](https://github.com/endojs/endo/tree/master/packages/ses). In some cases, you'll need to [patch a library](https://docs.metamask.io/snaps/how-to/troubleshoot/#patch-dependencies) to make it compatible.
-
-
 ## A note on the API's and fee's added to TXs
 DoggyFi is providing, for the communities benefit, and to enable the snap to function accross many ecosystems, public endpoints with a 5 request per minute rate limit per I.P..
 
