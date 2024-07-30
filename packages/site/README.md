@@ -6,6 +6,5 @@ This is the companion Dapp to the Dogecoin snap. It allows you to:
 - See your address
 - See your balance
 - See your transactions
-- Send DOGETEST to another address
-
-For the full tutorial, see the [root README](../../README.md).
+- Send DOGE to another address
+- Deploy, Mint, Transfer DRC-20 to another address
