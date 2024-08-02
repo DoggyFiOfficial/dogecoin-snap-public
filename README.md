@@ -111,12 +111,11 @@ As these endpoints cost DoggyFi money to be able to offer, DoggyFi will attach a
 ## Upcoming improvements
 A succinct list of improvements, are listed below:
 
-1. Support for wallets beyond path 0 - The snap currently only uses the dogecoin wallet on the 0th path. Future updates will add support for wallets beyond path 0.
-2. Show doginals in UTXOs - Improvement to show which doginals are in which UTXOs on the wallet.
-3. DRC-20 symbol availability check - Service to verify the availability of a DRC-20 symbol before deployment.
-4. Pre-validation of mint inscriptions - Endpoint to pre-validate mint inscriptions before they are sent.
-5. Display available balance of tokens - The snap will include information about available balances of tokens before making them transferable.
-6. Support for transfer inscriptions on vouts beyond 0 - Future versions will support transfer inscriptions made on vouts beyond 0.
-7. Send & Receive Dunes - Coming soon feature.
-8. Deploy, mint Dunes - Coming soon feature.
-9. Make Custom Doginals - Coming soon feature.
+1. Show doginals in UTXOs - Improvement to show which doginals are in which UTXOs on the wallet.
+2. DRC-20 symbol availability check - Service to verify the availability of a DRC-20 symbol before deployment.
+3. Pre-validation of mint inscriptions - Endpoint to pre-validate mint inscriptions before they are sent.
+4. Display available balance of tokens - The snap will include information about available balances of tokens before making them transferable.
+5. Support for transfer inscriptions on vouts beyond 0 - Future versions will support transfer inscriptions made on vouts beyond 0.
+6. Send & Receive Dunes - Coming soon feature.
+7. Deploy, mint Dunes - Coming soon feature.
+8. Make Custom Doginals - Coming soon feature.
