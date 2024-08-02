@@ -41,6 +41,7 @@ export async function getDogeOrdUnspents(
 
   // make this json into a list of DogeOrdUnspent objects
   const unspents: DogeOrdUnspent[] = [];
+
   /* eslint-disable */
   for (let i = 0; i < data.unspent_outputs.length; i++) {
     const unspent = data.unspent_outputs[i];
@@ -56,7 +57,7 @@ export async function getDogeOrdUnspents(
   /* eslint-enable */
 
   // return the data
-  return data;
+  return unspents;
 }
 
 /**
@@ -92,14 +93,13 @@ export async function getAllTxnsForAddress( // TODO: Replace with Transaction re
 export async function getBalanceForAddress(address: string): Promise<number> {
   // fetch unspents for the address
   const unspents = await getDogeOrdUnspents(address);
-
   // calculate the balance by summing the values of the unspents
   let balance = 0;
-  /* eslint-disable */
-  for (let i = 0; i < unspents.length; i++) {
-    balance += Number(unspents[i].value);
-  }
-  /* eslint-enable */
+  // reduce for balance
+  unspents.reduce((acc, unspent) => {
+    balance += Number(unspent.value);
+    return acc + balance;
+  }, 0);
 
   return balance;
 }

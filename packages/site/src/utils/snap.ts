@@ -79,23 +79,32 @@ const snapRpcRequest = async <M extends keyof RpcMethodTypes>(
 
 /**
  * Invoke the "doge_getAddress" RPC method from the snap.
+ * 
+ * @params - The address parameters.
  */
-export const getAddress = async () => {
+export const getAddress = async (addressIndex : number) => {
   return snapRpcRequest({
     snapRpcMethod: 'getAddress',
+    params: {
+      addressIndex,
+    },
   });
 };
 
 /**
  * Invoke the "doge_getBalance" RPC method from the snap.
  */
-export const getBalance = async () => {
+export const getBalance = async (addressIndex : number) => {
   return snapRpcRequest({
     snapRpcMethod: 'getBalance',
+    params: {
+      addressIndex,
+    },
   });
 };
 
 type MakeTransactionParams = {
+  addressIndex: number;
   amountInDoge: number;
   toAddress: string;
 };
@@ -107,6 +116,7 @@ type MakeTransactionParams = {
  * @param params.amountInDoge - The amount to send in DOGE.
  */
 export const makeTransaction = async ({
+  addressIndex,
   toAddress,
   amountInDoge,
 }: MakeTransactionParams) => {
@@ -114,6 +124,7 @@ export const makeTransaction = async ({
   return snapRpcRequest({
     snapRpcMethod: 'makeTransaction',
     params: {
+      addressIndex,
       toAddress,
       amountInSatoshi,
     },
@@ -130,10 +141,12 @@ export const makeTransaction = async ({
  * @param params.amount
  */
 export const mintDrc20 = async ({
+  addressIndex,
   toAddress,
   ticker,
   amount,
 }: {
+  addressIndex: number;
   toAddress: string;
   ticker: string;
   amount: number;
@@ -141,6 +154,7 @@ export const mintDrc20 = async ({
   return snapRpcRequest({
     snapRpcMethod: 'mintDrc20',
     params: {
+      addressIndex,
       toAddress,
       ticker,
       amount,
@@ -158,10 +172,12 @@ export const mintDrc20 = async ({
  * @param params.toAddress
  */
 export const mintTransferDrc20 = async ({
+  addressIndex,
   toAddress,
   ticker,
   amount,
 }: {
+  addressIndex: number;
   toAddress: string;
   ticker: string;
   amount: number;
@@ -169,6 +185,7 @@ export const mintTransferDrc20 = async ({
   return snapRpcRequest({
     snapRpcMethod: 'mintTransferDrc20',
     params: {
+      addressIndex,
       toAddress,
       ticker,
       amount,
@@ -185,10 +202,12 @@ export const mintTransferDrc20 = async ({
  * @param params.outputIndex
  */
 export const sendDoginal = async ({
+  addressIndex,
   toAddress,
   utxo,
   outputIndex,
 }: {
+  addressIndex: number;
   toAddress: string;
   utxo: string;
   outputIndex: number | undefined | null;
@@ -196,6 +215,7 @@ export const sendDoginal = async ({
   return snapRpcRequest({
     snapRpcMethod: 'sendDoginal',
     params: {
+      addressIndex,
       toAddress,
       utxo,
       outputIndex,
@@ -213,11 +233,13 @@ export const sendDoginal = async ({
  * @param params.amount - The amount to send.
  */
 export const sendDrc20 = async ({
+  addressIndex,
   toAddress,
   utxo,
   ticker,
   amount,
 }: {
+  addressIndex: number;
   toAddress: string;
   utxo: string;
   ticker: string;
@@ -226,6 +248,7 @@ export const sendDrc20 = async ({
   return snapRpcRequest({
     snapRpcMethod: 'sendDrc20',
     params: {
+      addressIndex,
       toAddress,
       utxo,
       ticker,
@@ -244,11 +267,13 @@ export const sendDrc20 = async ({
  * @param params.decimals - The decimals of the DRC20.
  */
 export const deployDrc20 = async ({
+  addressIndex,
   ticker,
   maxSupply,
   lim,
   decimals,
 }: {
+  addressIndex: number;
   ticker: string;
   maxSupply: number;
   lim: number | undefined | null;
@@ -257,6 +282,7 @@ export const deployDrc20 = async ({
   return snapRpcRequest({
     snapRpcMethod: 'deployDrc20',
     params: {
+      addressIndex,
       ticker,
       maxSupply,
       lim,

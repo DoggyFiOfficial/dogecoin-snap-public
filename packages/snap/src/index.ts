@@ -17,6 +17,7 @@ import {
   assertIsSendDrc20Params,
   assertIsMintDrc20Params,
   assertIsDeployDrc20Params,
+  assertIsAddressParams,
 } from './types';
 
 export * from './rpc-types';
@@ -24,13 +25,16 @@ export * from './rpc-types';
 export const onRpcRequest: OnRpcRequestHandler = async ({ request }) => {
   switch (request.method) {
     case 'doge_getAddress':
-      return getAddress();
+      assertIsAddressParams(request.params);
+      return getAddress(request.params);
 
     case 'doge_getTransactions':
-      return getTransactions();
+      assertIsAddressParams(request.params);
+      return getTransactions(request.params);
 
     case 'doge_getBalance':
-      return getBalance();
+      assertIsAddressParams(request.params);
+      return getBalance(request.params);
 
     case 'doge_makeTransaction':
       assertIsMakeTransactionParams(request.params);
