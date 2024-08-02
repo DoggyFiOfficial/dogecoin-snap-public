@@ -1,7 +1,7 @@
-import { useContext } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
-import { connectSnap, getSnap, shouldDisplayReconnectButton } from '../utils';
+import { connectSnap, getAddress, getBalance, getSnap, shouldDisplayReconnectButton } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
@@ -74,6 +74,27 @@ const ErrorMessage = styled.div`
 
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [ADDRESS, setAddress] = useState('');
+  const [BALANCE, setBalance] = useState(0);
+  const [ADDRESSINDEX, setAddressIndex] = useState(0);
+
+  useEffect(() => {
+    if (state.installedSnap) {
+      fetchAddressAndBalance(ADDRESSINDEX);
+    }
+  }, [state.installedSnap, ADDRESSINDEX]);
+
+  const fetchAddressAndBalance = async (index: number) => {
+    try {
+      const newAddress = await getAddress(index);
+      const newBalance = await getBalance(index);
+      setAddress(newAddress);
+      setBalance(newBalance);
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
 
   const handleConnectClick = async () => {
     try {
@@ -132,12 +153,26 @@ const Index = () => {
     _sendDRC20,
   } = useSendDRC20();
 
+  const handleSwitchAccount: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    let addressIndex = Number.parseInt(String(formData.get("addressIndex")))
+    if (addressIndex < 0) {
+      throw new Error("Address index MUST be an integer >= 0");
+    }
+    setAddressIndex(addressIndex)
+  }
+
   const handleSendDoge: React.FormEventHandler<HTMLFormElement> = async (
     event,
   ) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     sendDoge(formData);
   };
 
@@ -147,6 +182,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     _mintDrc20(formData);
   };
 
@@ -156,6 +192,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     _mintTransferDrc20(formData);
   };
 
@@ -165,6 +202,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     _deployDrc20(formData);
   };
 
@@ -174,6 +212,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     _sendDoginal(formData);
   };
 
@@ -183,12 +222,11 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
+    formData.append("addressIndex", String(ADDRESSINDEX))
     _sendDRC20(formData);
   };
 
   const isSnapInstalled = Boolean(state.installedSnap);
-  const { address } = useAddress(isSnapInstalled);
-  const { balance } = useBalance(isSnapInstalled);
 
   return (
     <Container>
@@ -244,21 +282,46 @@ const Index = () => {
             disabled={!state.installedSnap}
           />
         )}
-        {address && (
+        {ADDRESS && (
           <Card
             fullWidth
             content={{
               title: 'Your Dogecoin Address',
-              description: address,
+              description: ADDRESS,
             }}
           />
         )}
-        {balance !== undefined && (
+        {BALANCE !== undefined && (
           <Card
             fullWidth
             content={{
               title: 'Your Dogecoin Balance',
-              description: `${balance} DOGE`,
+              description: `${BALANCE} DOGE`,
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Change Account',
+              description: (
+                <>
+                  <form onSubmit={handleSwitchAccount}>
+                    <p>
+                      <input
+                        type="number"
+                        name="addressIndex"
+                        placeholder="0"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoading} type="submit">
+                      Switch account
+                    </button>
+                  </form>
+                </>
+              ),
             }}
           />
         )}

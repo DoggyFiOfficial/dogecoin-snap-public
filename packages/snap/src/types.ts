@@ -1,34 +1,64 @@
 export type MakeTransactionParams = {
+  addressIndex: number;
   toAddress: string;
   amountInSatoshi: number;
 };
 export type MintDrc20Params = {
+  addressIndex: number;
   toAddress: string;
   ticker: string;
   amount: number;
 };
+export type addressParams = {
+  addressIndex: number;
+};
 export type InscribeTransferDrc20Params = {
+  addressIndex: number;
   toAddress: string;
   ticker: string;
   amount: number;
 };
 export type SendDoginalParams = {
+  addressIndex: number;
   toAddress: string;
   utxo: string;
   outputIndex: number | undefined | null; // to account for different sat ranges and pointers...
 };
 export type sendDrc20Params = {
+  addressIndex: number;
   toAddress: string;
   utxo: string;
   ticker: string;
   amount: number; // TODO make optional if specific utxo is specified, can do a lookup, or mint/send
 };
 export type DeployDrc20Params = {
+  addressIndex: number;
   ticker: string;
   maxSupply: number;
   lim: number | undefined | null;
   decimals: number | undefined | null;
 };
+/**
+ * Throws if the value passed in isn't of type addressParams.
+ *
+ * @param params - The value to be checked.
+ */
+export function assertIsAddressParams(
+  params: unknown,
+): asserts params is addressParams {
+  if (
+    !(
+      typeof params === 'object' &&
+      params !== null &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' &&
+      params.addressIndex >= 0 && 
+      Number.isInteger(params.addressIndex)
+    )
+  ) {
+    throw new Error('params must be instance of `addressParams`');
+  }
+}
 /**
  * Throws if the value passed in isn't of type MakeTransactionParams.
  *
@@ -37,6 +67,13 @@ export type DeployDrc20Params = {
 export function assertIsMakeTransactionParams(
   params: unknown,
 ): asserts params is MakeTransactionParams {
+  let a = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    a = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
   if (
     !(
       typeof params === 'object' &&
@@ -44,10 +81,12 @@ export function assertIsMakeTransactionParams(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'amountInSatoshi' in params &&
-      typeof params.amountInSatoshi === 'number'
+      typeof params.amountInSatoshi === 'number' &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' && a
     )
   ) {
-    throw new Error('params must be instance of `MakeTransactionParams`');
+    throw new Error('params must be instance of `MakeTransactionParams`' + JSON.stringify(params));
   }
 }
 
@@ -59,6 +98,13 @@ export function assertIsMakeTransactionParams(
 export function assertIsMintDrc20Params(
   params: unknown,
 ): asserts params is MintDrc20Params {
+  let a = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    a = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
   if (
     !(
       typeof params === 'object' &&
@@ -70,7 +116,9 @@ export function assertIsMintDrc20Params(
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
-      params.amount > 0
+      params.amount > 0 && 
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' && a
     )
   ) {
     throw new Error('params must be instance of `mintDrc20Params`');
@@ -85,6 +133,13 @@ export function assertIsMintDrc20Params(
 export function assertIsInscribeTransferDrc20Params(
   params: unknown,
 ): asserts params is InscribeTransferDrc20Params {
+  let a = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    a = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
   if (
     !(
       typeof params === 'object' &&
@@ -96,7 +151,9 @@ export function assertIsInscribeTransferDrc20Params(
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
-      params.amount > 0
+      params.amount > 0 && 
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' && a
     )
   ) {
     throw new Error('params must be instance of `transferDrc20Params`');
@@ -111,6 +168,13 @@ export function assertIsInscribeTransferDrc20Params(
 export function assertIsSendDoginalParams(
   params: unknown,
 ): asserts params is SendDoginalParams {
+  let a = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    a = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
   if (
     !(
       typeof params === 'object' &&
@@ -121,10 +185,12 @@ export function assertIsSendDoginalParams(
       'utxo' !== null &&
       typeof params.utxo === 'string' &&
       params.utxo.length > 0 &&
-      'outputIndex' in params &&
+      'outputIndex' in params && 
       (typeof params.outputIndex === 'number' ||
         params.outputIndex === undefined ||
-        params.outputIndex === null)
+        params.outputIndex === null) &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' && a
     )
   ) {
     throw new Error(
@@ -136,13 +202,20 @@ export function assertIsSendDoginalParams(
 }
 
 /**
- * Throws if value passed in isn't of type SendDrc20Params
+ * Throws if value passed in isn't of type SendDrc20Params.
  *
  * @param params - The value to be checked.
  */
 export function assertIsSendDrc20Params(
   params: unknown,
 ): asserts params is sendDrc20Params {
+  let a = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    a = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
   if (
     !(
       typeof params === 'object' &&
@@ -158,7 +231,9 @@ export function assertIsSendDrc20Params(
       'utxo' in params &&
       'utxo' !== null &&
       typeof params.utxo === 'string' &&
-      params.utxo.length > 0
+      params.utxo.length > 0 &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' && a
     )
   ) {
     throw new Error(
@@ -224,8 +299,15 @@ export function assertIsDeployDrc20Params(
   } else {
     b = false;
   }
+  let c = false;
+  if (typeof params === 'object' && params !== null && 'addressIndex' in params && typeof params.addressIndex === 'number') {
+    assertIsAddressParams({addressIndex: params.addressIndex});
+    c = true;
+  } else {
+    throw new Error('params must be instance of `MakeTransactionParams`');
+  }
 
-  if (a && b) {
+  if (!(a && b && c)) {
     throw new Error('params must be instance of `deployDrc20Params`');
   }
 }

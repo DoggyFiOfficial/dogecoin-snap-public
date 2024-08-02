@@ -15,12 +15,16 @@ export const useSendDoginals = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex');
       const toAddress = data.get('toAddress');
       const utxo = data.get('utxo');
+      let outputIndex = data.get('outputIndex');
 
       const response = await sendDoginal({
+        addressIndex: Number(addressIndex),
         toAddress: String(toAddress),
         utxo: String(utxo),
+        outputIndex: Number(outputIndex),
       });
       setLastTxId(response);
     } catch (err: unknown) {

@@ -15,12 +15,14 @@ export const useSendDoge = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex');
       const toAddress = data.get('toAddress');
       const amountInDoge = data.get('amountInDoge');
 
       if (typeof toAddress === 'string' && typeof amountInDoge === 'string') {
         const response = await makeTransaction({
-          toAddress,
+          addressIndex : Number(addressIndex),
+          toAddress: String(toAddress),
           amountInDoge: Number(amountInDoge),
         });
         setLastTxId(response);

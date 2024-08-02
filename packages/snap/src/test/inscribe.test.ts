@@ -52,7 +52,7 @@ describe('Will evaluate that we can make the correct hex for transfer of a drc20
     );
 
     const testcommit = result[0] === mintTransferTests.COMMIT;
-    
+
     expect(testcommit).toBe(true);
     expect(fees).toBeGreaterThan(0);
   });
@@ -73,14 +73,14 @@ describe('Will evaluate that we can make the correct hex for transfer of a drc20
 });
 
 describe('Will evaluate that we can make the correct hex for deploy of a drc20', () => {
-  it ('should return the correct commit tx hex', async () => {
+  it('should return the correct commit tx hex', async () => {
     const [result, fees] = await mintDeploy(
       env.PRIVATE_KEY,
       env.ADDRESS,
       validTicker,
       max,
       lim,
-      dec
+      dec,
     );
 
     const testcommit = result[0] === deployTests.COMMIT;
@@ -89,7 +89,7 @@ describe('Will evaluate that we can make the correct hex for deploy of a drc20',
     expect(fees).toBeGreaterThan(0);
   });
 
-  it ('should return the correct reveal tx hex', async () => {
+  it('should return the correct reveal tx hex', async () => {
     const [result, fees] = await mintDeploy(
       env.PRIVATE_KEY,
       env.ADDRESS,

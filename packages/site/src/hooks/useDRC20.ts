@@ -15,12 +15,14 @@ export const useDeployDRC20 = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex');
       const ticker = data.get('ticker');
       const maxSupply = data.get('maxSupply');
       const lim = data.get('lim');
       const decimals = data.get('decimals');
 
       const response = await deployDrc20({
+        addressIndex: Number(addressIndex),
         ticker: String(ticker),
         maxSupply: Number(maxSupply),
         lim: lim ? Number(lim) : null,
@@ -57,11 +59,13 @@ export const useMintDRC20 = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex');
       const toAddress = data.get('toAddress');
       const ticker = data.get('ticker');
       const amount = data.get('amount');
 
       const response: [string, string] = await mintDrc20({
+        addressIndex: Number(addressIndex),
         toAddress: String(toAddress),
         ticker: String(ticker),
         amount: Number(amount),
@@ -98,11 +102,13 @@ export const useMintTransferDRC20 = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex');
       const toAddress = data.get('toAddress');
       const ticker = data.get('ticker');
       const amount = data.get('amount');
       console.log('Line 106 inside of useMintTransferDRC20');
       const response = await mintTransferDrc20({
+        addressIndex: Number(addressIndex),
         toAddress: String(toAddress),
         ticker: String(ticker),
         amount: Number(amount),
@@ -139,12 +145,14 @@ export const useSendDRC20 = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
+      const addressIndex = data.get('addressIndex')
       const toAddress = data.get('toAddress');
       const utxo = data.get('utxo');
       const ticker = data.get('ticker');
       const amount = data.get('amount');
 
       const response = await sendDrc20({
+        addressIndex: Number(addressIndex),
         toAddress: String(toAddress),
         utxo: String(utxo),
         ticker: String(ticker),

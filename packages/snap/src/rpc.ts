@@ -21,6 +21,7 @@ import {
   sendDrc20Params,
   DeployDrc20Params,
   SendDoginalParams,
+  addressParams,
 } from './types';
 import {
   mintDeploy,
@@ -45,10 +46,12 @@ const dogecoinNetwork = {
 };
 
 /**
- * This demo wallet uses a single account/address.
+ * Get the address for the given address index.
+ *
+ * @param params - The parameters for getting the address.
  */
-export const getAddress = async (): Promise<string> => {
-  const account = await getAccount();
+export const getAddress = async (params: addressParams): Promise<string> => {
+  const account = await getAccount(params.addressIndex);
 
   const { address } = bitcoin.payments.p2pkh({
     pubkey: Buffer.from(account.compressedPublicKeyBytes),
@@ -62,18 +65,23 @@ export const getAddress = async (): Promise<string> => {
   return address;
 };
 
-export const getTransactions = async (): Promise<Transaction[]> => {
+export const getTransactions = async (
+  params: addressParams
+): Promise<Transaction[]> => {
   // TODO: Replace TATUM
-  const myAddress = await getAddress();
+  const myAddress = await getAddress(params);
   return getAllTxnsForAddress(myAddress);
 };
 
-export const getBalance = async (): Promise<number> => {
-  const myAddress = await getAddress();
+/**
+ * Get the balance for the given address index.
+ * 
+ * @param params The parameters for getting the balance.
+ * @returns The balance of the address.
+ */
+export const getBalance = async (params: addressParams): Promise<number> => {
+  const myAddress = await getAddress(params);
   const balanceResponse = await getBalanceForAddress(myAddress);
-  // return (
-  //   parseFloat(balanceResponse.incoming) - parseFloat(balanceResponse.outgoing)
-  // );
   return Number(balanceResponse) / 10 ** 8;
 };
 
@@ -99,6 +107,7 @@ export const getBalance = async (): Promise<number> => {
  * @param transactionParams.amountInSatoshi - The amount to send, in "satoshis" i.e. DOGE * 100_000_000.
  */
 export const makeTransaction = async ({
+  addressIndex,
   toAddress,
   amountInSatoshi,
 }: MakeTransactionParams): Promise<string> => {
@@ -126,12 +135,12 @@ export const makeTransaction = async ({
     network: dogecoinNetwork,
   });
 
-  const account = await getAccount();
+  const account = await getAccount( addressIndex );
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
 
-  const myAddress = await getAddress();
+  const myAddress = await getAddress({addressIndex: addressIndex});
   const utxos = await getUtxosForValue(myAddress, amountInSatoshi); // this is the broken function....
 
   if (utxos.length === 0) {
@@ -221,11 +230,11 @@ function deriveBase58PrivateKey(privateKeyBytes: Uint8Array) {
 export async function mintDrc20(
   params: MintDrc20Params,
 ): Promise<[string, string]> {
-  const account = await getAccount();
+  const account = await getAccount( params.addressIndex );
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  const myAddress = await getAddress();
+  const myAddress = await getAddress({addressIndex : params.addressIndex});
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
   const [txs, fees] = await _mintDrc20(
     privkey,
@@ -267,11 +276,11 @@ export async function mintDrc20(
 export async function mintTransferDrc20(
   params: InscribeTransferDrc20Params,
 ): Promise<[string, string]> {
-  const account = await getAccount();
+  const account = await getAccount( params.addressIndex );
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  const myAddress = await getAddress();
+  const myAddress = await getAddress({addressIndex : params.addressIndex});
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
   const [txs, fees] = await transferDrc20(
     privkey,
@@ -367,12 +376,12 @@ export async function sendDoginal(
     network: dogecoinNetwork,
   });
 
-  const account = await getAccount();
+  const account = await getAccount( _params.addressIndex );
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
 
-  const myAddress = await getAddress();
+  const myAddress = await getAddress({addressIndex : _params.addressIndex});
   let doginalUtxo: DogeOrdUnspent | undefined;
   if (!doginalUtxo) {
     // fetch the utxo we need to spend
@@ -520,7 +529,7 @@ export async function sendDrc20(_params: sendDrc20Params): Promise<string> {
   // fetch the tx for the hash, validate which index is the transferable output
   const { startIndex, endIndex } = await getSatRange(
     await getRpcTxDtails(_params.utxo),
-    await getAddress(),
+    await getAddress({ addressIndex: _params.addressIndex }),
     makeTransferInscription(
       'drc-20',
       _params.ticker,
@@ -534,6 +543,7 @@ export async function sendDrc20(_params: sendDrc20Params): Promise<string> {
 
   return await sendDoginal(
     {
+      addressIndex: _params.addressIndex,
       toAddress: _params.toAddress,
       utxo: _params.utxo,
       outputIndex: startIndex,
@@ -570,11 +580,11 @@ export async function deployDrc20(
   if (response !== true) {
     throw new Error('DRC20 deployment must be approved by user');
   }
-  const account = await getAccount();
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  const myAddress = await getAddress();
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
   const [txs, fees] = await mintDeploy(
     privkey,
