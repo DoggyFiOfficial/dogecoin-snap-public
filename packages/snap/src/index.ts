@@ -9,6 +9,10 @@ import {
   sendDrc20,
   sendDoginal,
   deployDrc20,
+  signPsbt,
+  pushPsbt,
+  signMessage,
+  verifyMessage,
 } from './rpc';
 import {
   assertIsMakeTransactionParams,
@@ -18,6 +22,10 @@ import {
   assertIsMintDrc20Params,
   assertIsDeployDrc20Params,
   assertIsAddressParams,
+  assertIsSignPsbtParams,
+  assertIsPushPsbtParams,
+  assertIsSignMessageParams,
+  assertIsVerifyMessageParams,
 } from './types';
 
 export * from './rpc-types';
@@ -58,6 +66,22 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ request }) => {
     case 'doge_sendDoginal':
       assertIsSendDoginalParams(request.params);
       return sendDoginal(request.params);
+
+    case 'doge_signPsbt':
+      assertIsSignPsbtParams(request.params);
+      return signPsbt(request.params);
+    
+    case 'doge_pushPsbt':
+      assertIsPushPsbtParams(request.params);
+      return pushPsbt(request.params);
+    
+    case 'doge_signMessage':
+      assertIsSignMessageParams(request.params);
+      return signMessage(request.params);
+    
+    case 'doge_verifyMessage':
+      assertIsVerifyMessageParams(request.params);
+      return verifyMessage(request.params);
 
     default:
       throw new Error('Method not found.');

@@ -38,6 +38,106 @@ export type DeployDrc20Params = {
   lim: number | undefined | null;
   decimals: number | undefined | null;
 };
+export type signPsbtParams = {
+  addressIndex: number;
+  psbtHexString: string;
+};
+export type pushPsbtParams = {
+  psbtHexString: string;
+};
+export type signMessageParams = {
+  addressIndex: number;
+  message: string;
+};
+export type verifyMessageParams = {
+  addressIndex: number;
+  message: string;
+  signature: string;
+};
+/** Throws if the value passed in isn't of type signPsbtParams.
+ * 
+ * @param params - The value to be checked.
+ */
+export function assertIsSignPsbtParams(
+  params: unknown,
+): asserts params is signPsbtParams {
+  if (
+    !(
+      typeof params === 'object' &&
+      params !== null &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' &&
+      'psbtHexString' in params &&
+      typeof params.psbtHexString === 'string'
+    )
+  ) {
+    throw new Error('params must be instance of `signPsbtParams`');
+  }
+}
+/**
+ * Throws if the value passed in isn't of type pushPsbtParams.
+ * 
+ * @param params - The value to be checked.
+ */
+export function assertIsPushPsbtParams(
+  params: unknown,
+): asserts params is pushPsbtParams {
+  if (
+    !(
+      typeof params === 'object' &&
+      params !== null &&
+      'psbtHexString' in params &&
+      typeof params.psbtHexString === 'string'
+    )
+  ) {
+    throw new Error('params must be instance of `pushPsbtParams`');
+  }
+}
+/**
+ * Throws if the value passed in isn't of type signMessageParams.
+ * 
+ * @param params - The value to be checked.
+ */
+export function assertIsSignMessageParams(
+  params: unknown,
+): asserts params is signMessageParams {
+  if (
+    !(
+      typeof params === 'object' &&
+      params !== null &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' &&
+      'message' in params &&
+      typeof params.message === 'string'
+    )
+  ) {
+    throw new Error('params must be instance of `signMessageParams`');
+  }
+}
+/**
+ * Throws if the value passed in isn't of type verifyMessageParams.
+ * 
+ * @param params - The value to be checked.
+ */
+export function assertIsVerifyMessageParams(
+  params: unknown,
+): asserts params is verifyMessageParams {
+  if (
+    !(
+      typeof params === 'object' &&
+      params !== null &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' &&
+      'message' in params &&
+      typeof params.message === 'string' &&
+      'signature' in params &&
+      typeof params.signature === 'string'
+    )
+  ) {
+    throw new Error('params must be instance of `verifyMessageParams`');
+  }
+}
+
 /**
  * Throws if the value passed in isn't of type addressParams.
  *

@@ -23,6 +23,10 @@ import {
   DeployDrc20Params,
   SendDoginalParams,
   addressParams,
+  signPsbtParams,
+  pushPsbtParams,
+  signMessageParams,
+  verifyMessageParams,
 } from './types';
 import {
   mintDeploy,
@@ -213,10 +217,9 @@ export const makeTransaction = async ({
  * @returns The signed PSBT.
 */
 export async function signPsbt(
-  addressIndex: number,
-  psbtHexString: string,
+  params: signPsbtParams,
 ): Promise<bitcoin.Psbt> {
-  const account = await getAccount(addressIndex);
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
@@ -232,7 +235,7 @@ export async function signPsbt(
         heading('Confirm transaction'),
         divider(),
         text('You are signing the following tx:'),
-        copyable(psbtHexString),
+        copyable(params.psbtHexString),
       ]),
     },
   });
@@ -242,7 +245,7 @@ export async function signPsbt(
     throw new Error('Signing must be approved by user');
   }
   
-  const psbtCopy = bitcoin.Psbt.fromHex(psbtHexString, { network: dogecoinNetwork });
+  const psbtCopy = bitcoin.Psbt.fromHex(params.psbtHexString, { network: dogecoinNetwork });
   
   psbtCopy.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
@@ -259,10 +262,9 @@ export async function signPsbt(
  * @returns The signed message.
  */
 export async function signMessage(
-  addressIndex: number,
-  message: string,
+  params: signMessageParams,
 ): Promise<string> {
-  const account = await getAccount(addressIndex);
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
@@ -277,7 +279,7 @@ export async function signMessage(
         heading('Confirm message'),
         divider(),
         text('You are signing the following message:'),
-        copyable(message),
+        copyable(params.message),
       ]),
     },
   });
@@ -292,7 +294,7 @@ export async function signMessage(
   if (!privateKey) {
     throw new Error('Private key is required');
   }
-  const signature = bitcoinMessage.sign(message, privateKey, keyPair.compressed);
+  const signature = bitcoinMessage.sign(params.message, privateKey, keyPair.compressed);
   return signature.toString('base64');
 }
 
@@ -305,11 +307,9 @@ export async function signMessage(
  * @returns A promise of a boolean indicating if the message is verified.
  */
 export async function verifyMessage(
-  addressIndex: number,
-  message: string,
-  signature: string,
+  params: verifyMessageParams,
 ): Promise<boolean> {
-  const account = await getAccount(addressIndex);
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
@@ -323,14 +323,14 @@ export async function verifyMessage(
         heading('Confirm message verification'),
         divider(),
         text('You are verifying the following message:'),
-        copyable(message),
+        copyable(params.message),
       ]),
     },
   });
   if (confirmationResponse !== true) {
     throw new Error('Verification must be approved by user');
   }
-  const address = await getAddress({ addressIndex });
+  const address = await getAddress({ addressIndex: params.addressIndex });
   const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes), {
     network: dogecoinNetwork,
   });
@@ -338,7 +338,7 @@ export async function verifyMessage(
   if (!publicKey) {
     throw new Error('Public key is required');
   }
-  return bitcoinMessage.verify(message, address, Buffer.from(signature, 'base64'));
+  return bitcoinMessage.verify(params.message, address, Buffer.from(params.signature, 'base64'));
 }
 
 /**
@@ -347,7 +347,7 @@ export async function verifyMessage(
  * @param psbt 
  * @returns A promise of the transaction hash.
  */
-export async function pushPSBT(psbt: bitcoin.Psbt): Promise<string> {
+export async function pushPsbt(params: pushPsbtParams): Promise<string> {
   // ask the snap to confirm the signing, give the user a chance to review the transaction
   // give them a basic summary of the transaction
   const confirmationResponse = await snap.request({
@@ -358,13 +358,14 @@ export async function pushPSBT(psbt: bitcoin.Psbt): Promise<string> {
         heading('Confirm transaction'),
         divider(),
         text('You are posting the following tx:'),
-        copyable(psbt.toHex()),
+        copyable(params.psbtHexString),
       ]),
     },
   });
   if (confirmationResponse !== true) {
     throw new Error('Transaction must be approved by user');
   }
+  const psbt = bitcoin.Psbt.fromHex(params.psbtHexString, { network: dogecoinNetwork });
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
   return await broadcastSignedTransaction(txHex);
 }
