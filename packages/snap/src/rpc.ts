@@ -1,4 +1,5 @@
 import * as bitcoin from 'bitcoinjs-lib';
+import * as bitcoinMessage from 'bitcoinjs-message';
 // @ts-expect-error No types exist
 import coininfo from 'coininfo';
 import { copyable, divider, heading, panel, text } from '@metamask/snaps-ui';
@@ -203,6 +204,170 @@ export const makeTransaction = async ({
   const txResponse = await broadcastSignedTransaction(txHex);
   return txResponse;
 };
+
+/**
+ * Signs a PSBT with the selected private key.
+ * 
+ * @param addressIndex - The address index to use.
+ * @param psbt - The PSBT to sign.
+ * @returns The signed PSBT.
+*/
+export async function signPsbt(
+  addressIndex: number,
+  psbtHexString: string,
+): Promise<bitcoin.Psbt> {
+  const account = await getAccount(addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  
+  // ask the snap to confirm the signing, give the user a chance to review the transaction
+  // this means giving them the hex
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text('You are signing the following tx:'),
+        copyable(psbtHexString),
+      ]),
+    },
+  });
+  
+  
+  if (confirmationResponse !== true) {
+    throw new Error('Signing must be approved by user');
+  }
+  
+  const psbtCopy = bitcoin.Psbt.fromHex(psbtHexString, { network: dogecoinNetwork });
+  
+  psbtCopy.signAllInputs(
+    bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+  );
+
+  return psbtCopy;
+}
+
+/**
+ * Signs a Message with the selected private key.
+ * 
+ * @param addressIndex - The address index to use.
+ * @param message - The message to sign.
+ * @returns The signed message.
+ */
+export async function signMessage(
+  addressIndex: number,
+  message: string,
+): Promise<string> {
+  const account = await getAccount(addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  // ask the snap to confirm the signing, give the user a chance to review the transaction
+  // this means giving them the message
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm message'),
+        divider(),
+        text('You are signing the following message:'),
+        copyable(message),
+      ]),
+    },
+  });
+  if (confirmationResponse !== true) {
+    throw new Error('Signing must be approved by user');
+  }
+
+  const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes), {
+    network: dogecoinNetwork,
+  });
+  const privateKey = keyPair.privateKey;
+  if (!privateKey) {
+    throw new Error('Private key is required');
+  }
+  const signature = bitcoinMessage.sign(message, privateKey, keyPair.compressed);
+  return signature.toString('base64');
+}
+
+/**
+ * Verifies a message with the selected address.
+ * 
+ * @param addressIndex 
+ * @param message 
+ * @param signature 
+ * @returns A promise of a boolean indicating if the message is verified.
+ */
+export async function verifyMessage(
+  addressIndex: number,
+  message: string,
+  signature: string,
+): Promise<boolean> {
+  const account = await getAccount(addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  // ask user if they wish to confirm they can verify the message
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm message verification'),
+        divider(),
+        text('You are verifying the following message:'),
+        copyable(message),
+      ]),
+    },
+  });
+  if (confirmationResponse !== true) {
+    throw new Error('Verification must be approved by user');
+  }
+  const address = await getAddress({ addressIndex });
+  const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes), {
+    network: dogecoinNetwork,
+  });
+  const publicKey = keyPair.publicKey;
+  if (!publicKey) {
+    throw new Error('Public key is required');
+  }
+  return bitcoinMessage.verify(message, address, Buffer.from(signature, 'base64'));
+}
+
+/**
+ * Pushes a signed PSBT to the network.
+ * 
+ * @param psbt 
+ * @returns A promise of the transaction hash.
+ */
+export async function pushPSBT(psbt: bitcoin.Psbt): Promise<string> {
+  // ask the snap to confirm the signing, give the user a chance to review the transaction
+  // give them a basic summary of the transaction
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text('You are posting the following tx:'),
+        copyable(psbt.toHex()),
+      ]),
+    },
+  });
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction must be approved by user');
+  }
+  const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
+  return await broadcastSignedTransaction(txHex);
+}
 
 /**
  * Derives a base58 private key string from a Buffer containing private key bytes.
