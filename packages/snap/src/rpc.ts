@@ -214,11 +214,11 @@ export const makeTransaction = async ({
  * 
  * @param addressIndex - The address index to use.
  * @param psbt - The PSBT to sign.
- * @returns The signed PSBT.
+ * @returns The signed PSBT as a hex string.
 */
 export async function signPsbt(
   params: signPsbtParams,
-): Promise<bitcoin.Psbt> {
+): Promise<string> {
   const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
@@ -251,7 +251,7 @@ export async function signPsbt(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
 
-  return psbtCopy;
+  return psbtCopy.toHex();
 }
 
 /**
