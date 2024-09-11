@@ -1,15 +1,19 @@
 import { useContext, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
-import { connectSnap, getAddress, getBalance, getSnap, shouldDisplayReconnectButton } from '../utils';
+import {
+  connectSnap,
+  getAddress,
+  getBalance,
+  getSnap,
+  shouldDisplayReconnectButton,
+} from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
   ReconnectButton,
   Card,
 } from '../components';
-import { useAddress } from '../hooks/useAddress';
-import { useBalance } from '../hooks/useBalance';
 import { useSendDoge } from '../hooks/useSendDoge';
 import { useSendDoginals } from '../hooks/useDoginals';
 import {
@@ -18,6 +22,12 @@ import {
   useMintTransferDRC20,
   useSendDRC20,
 } from '../hooks/useDRC20';
+import {
+  useSendDune,
+  useOpenDune,
+  useMintDunes,
+  useSplitDunes,
+} from '../hooks/useDunes';
 
 const Container = styled.div`
   display: flex;
@@ -153,18 +163,46 @@ const Index = () => {
     _sendDRC20,
   } = useSendDRC20();
 
+  const {
+    error: txErrorSendDune,
+    isLoading: isTxLoadingSendDune,
+    lastTxId: lastTxIdSendDune,
+    _sendDune,
+  } = useSendDune();
+
+  const {
+    error: txErrorOpenDune,
+    isLoading: isTxLoadingOpenDune,
+    lastTxId: lastTxIdOpenDune,
+    _openDune,
+  } = useOpenDune();
+
+  const {
+    error: txErrorMintDune,
+    isLoading: isTxLoadingMintDune,
+    lastTxId: lastTxIdMintDune,
+    _mintDune,
+  } = useMintDunes();
+
+  const {
+    error: txErrorSplitDunes,
+    isLoading: isTxLoadingSplitDunes,
+    lastTxId: lastTxIdSplitDunes,
+    _splitDunes,
+  } = useSplitDunes();
+
   const handleSwitchAccount: React.FormEventHandler<HTMLFormElement> = async (
     event,
   ) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    let addressIndex = Number.parseInt(String(formData.get("addressIndex")))
+    let addressIndex = Number.parseInt(String(formData.get('addressIndex')));
     if (addressIndex < 0) {
-      throw new Error("Address index MUST be an integer >= 0");
+      throw new Error('Address index MUST be an integer >= 0');
     }
-    setAddressIndex(addressIndex)
-  }
+    setAddressIndex(addressIndex);
+  };
 
   const handleSendDoge: React.FormEventHandler<HTMLFormElement> = async (
     event,
@@ -172,7 +210,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     sendDoge(formData);
   };
 
@@ -182,7 +220,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     _mintDrc20(formData);
   };
 
@@ -192,7 +230,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     _mintTransferDrc20(formData);
   };
 
@@ -202,7 +240,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     _deployDrc20(formData);
   };
 
@@ -212,7 +250,7 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     _sendDoginal(formData);
   };
 
@@ -222,8 +260,48 @@ const Index = () => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    formData.append("addressIndex", String(ADDRESSINDEX))
+    formData.append('addressIndex', String(ADDRESSINDEX));
     _sendDRC20(formData);
+  };
+
+  const handleSendDune: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _sendDune(formData);
+  };
+
+  const handleOpenDune: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _openDune(formData);
+  };
+
+  const handleMintDune: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _mintDune(formData);
+  };
+
+  const handleSplitDunes: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _splitDunes(formData);
   };
 
   const isSnapInstalled = Boolean(state.installedSnap);
@@ -357,7 +435,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxId}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxId}`}
                       >
                         {lastTxId}
                       </a>
@@ -373,7 +451,7 @@ const Index = () => {
           <Card
             fullWidth
             content={{
-              title: 'Mint Token',
+              title: 'Mint DRC-20 Token',
               description: (
                 <>
                   <form onSubmit={handleMintToken}>
@@ -402,7 +480,7 @@ const Index = () => {
                       />
                     </p>
                     <button disabled={isTxLoadingMintDRC20} type="submit">
-                      Mint Token
+                      Mint DRC-20 Token
                     </button>
                   </form>
                   {lastTxIdMintDRC20 && (
@@ -411,7 +489,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxIdMintDRC20}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdMintDRC20}`}
                       >
                         {lastTxIdMintDRC20}
                       </a>
@@ -429,7 +507,7 @@ const Index = () => {
           <Card
             fullWidth
             content={{
-              title: 'Deploy Token',
+              title: 'Deploy DRC-20 Token',
               description: (
                 <>
                   <form onSubmit={handleDeployDRC20}>
@@ -474,7 +552,7 @@ const Index = () => {
                       />
                     </p>
                     <button disabled={isTxLoadingDeployDRC20} type="submit">
-                      Deploy Token
+                      Deploy DRC-20 Token
                     </button>
                   </form>
                   {lastTxIdDeployDRC20 && (
@@ -483,7 +561,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxIdDeployDRC20}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdDeployDRC20}`}
                       >
                         {lastTxIdDeployDRC20}
                       </a>
@@ -502,7 +580,7 @@ const Index = () => {
             fullWidth
             content={{
               title:
-                'Mint Transfer Inscription / Make Token Amount Transferable',
+                'Mint DRC-20 Transfer Inscription / Make DRC-20 Token Amount Transferable',
               description: (
                 <>
                   <form onSubmit={handleMintTransferToken}>
@@ -534,7 +612,7 @@ const Index = () => {
                       disabled={isTxLoadingMintTransferDRC20}
                       type="submit"
                     >
-                      Make Transfer Inscription
+                      Make DRC-20 Transfer Inscription
                     </button>
                   </form>
                   {lastTxIdMintTransferDRC20 && (
@@ -543,7 +621,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxIdMintTransferDRC20}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdMintTransferDRC20}`}
                       >
                         {lastTxIdMintTransferDRC20}
                       </a>
@@ -599,7 +677,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxIdSendDoginal}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDoginal}`}
                       >
                         {lastTxIdSendDoginal}
                       </a>
@@ -607,6 +685,302 @@ const Index = () => {
                   )}
                   {txErrorSendDoginal && (
                     <ErrorMessage>{txErrorSendDoginal}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Send Dune',
+              description: (
+                <>
+                  <form onSubmit={handleSendDune}>
+                    <p>
+                      <input
+                        type="string"
+                        name="toAddress"
+                        placeholder="Destination Address"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="amount"
+                        placeholder="Exact amount of the dune to send"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="dune"
+                        placeholder="name of dune being transferred"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingSendDune} type="submit">
+                      Send Dune Inscription
+                    </button>
+                  </form>
+                  {lastTxIdSendDune && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                      >
+                        {lastTxIdSendDune}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorSendDune && (
+                    <ErrorMessage>{txErrorSendDune}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Mint Dune',
+              description: (
+                <>
+                  <form onSubmit={handleMintDune}>
+                    <p>
+                      <input
+                        type="string"
+                        name="id"
+                        placeholder="Dune id to mint"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="amount"
+                        placeholder="Amount of Dune to mint"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="receiver"
+                        placeholder="Doge address to receive minted Dune"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingMintDune} type="submit">
+                      Send Mint Dune Inscription
+                    </button>
+                  </form>
+                  {lastTxIdMintDune && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdMintDune}`}
+                      >
+                        {lastTxIdMintDune}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorMintDune && (
+                    <ErrorMessage>{txErrorMintDune}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Open Dune',
+              description: (
+                <>
+                  <form onSubmit={handleOpenDune}>
+                    <p>
+                      <input
+                        type="string"
+                        name="tick"
+                        placeholder="ticker"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="symbol"
+                        placeholder="symbol of the dune"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="limit"
+                        placeholder="mint limit"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="divisibility"
+                        placeholder="How many decimals the dune can be divided into"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="cap"
+                        placeholder="(optional) supply cap of the dune"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="heightStart"
+                        placeholder="Block height to start minting"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="heightEnd"
+                        placeholder="Block height to end minting"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="offsetStart"
+                        placeholder="offset start"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="offsetEnd"
+                        placeholder="offset end"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="premine"
+                        placeholder="premine amount"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="boolean"
+                        name="turbo"
+                        placeholder="turbo mode"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="boolean"
+                        name="openMint"
+                        placeholder="If true, is indefinitely open for minting until cap is reached"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingOpenDune} type="submit">
+                      Deploy Open Dune Inscription
+                    </button>
+                  </form>
+                  {lastTxIdOpenDune && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdOpenDune}`}
+                      >
+                        {lastTxIdOpenDune}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorOpenDune && (
+                    <ErrorMessage>{txErrorOpenDune}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Send Dune',
+              description: (
+                <>
+                  <form onSubmit={handleSendDune}>
+                    <p>
+                      <input
+                        type="string"
+                        name="toAddress"
+                        placeholder="Destination Address"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="number"
+                        name="amount"
+                        placeholder="Exact amount of the dune to send"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="dune"
+                        placeholder="name of dune being transferred"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingSendDune} type="submit">
+                      Send Dune Inscription
+                    </button>
+                  </form>
+                  {lastTxIdSendDune && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                      >
+                        {lastTxIdSendDune}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorSendDune && (
+                    <ErrorMessage>{txErrorSendDune}</ErrorMessage>
                   )}
                 </>
               ),
@@ -663,7 +1037,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://dogechain.info/tx/${lastTxIdSendDRC20}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDRC20}`}
                       >
                         {lastTxIdSendDRC20}
                       </a>

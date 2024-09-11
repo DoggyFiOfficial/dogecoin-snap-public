@@ -222,7 +222,8 @@ export async function broadcastSignedTransaction(
     res = await pushTransaction(txData);
     return res;
   } catch (e) {
-    while (retry) { // eslint-disable-line
+    while (retry) {
+      // eslint-disable-line
       if (msg?.includes('too-long-mempool-chain')) {
         console.warn('retrying in 15 secs, too-long-mempool-chain');
         await new Promise((resolve) => setTimeout(resolve, 15000));

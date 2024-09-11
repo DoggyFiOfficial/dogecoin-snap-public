@@ -3,16 +3,6 @@ import * as bitcoinMessage from 'bitcoinjs-message';
 // @ts-expect-error No types exist
 import coininfo from 'coininfo';
 import { copyable, divider, heading, panel, text } from '@metamask/snaps-ui';
-import {
-  broadcastSignedTransaction,
-  DogeOrdUnspent,
-  getAllTxnsForAddress,
-  getBalanceForAddress,
-  getFees,
-  getTransactionHex,
-  getUtxosForValue,
-} from './tatum';
-import { getRpcTxDtails, RPCTransaction, Transaction } from './queries';
 import { SATOSHI_TO_DOGE } from './constants';
 import { getAccount } from './private-key';
 import {
@@ -27,16 +17,45 @@ import {
   pushPsbtParams,
   signMessageParams,
   verifyMessageParams,
+  inscribeDataParams,
+  openDuneTxParams,
+  mintDuneTxParams,
+  splitDuneTxParams,
+  sendDuneParams,
+  GetDuneBalancesParams,
+  GetDuneMetadataParams,
+  Drc20InfoParams,
 } from './types';
 import {
   mintDeploy,
   mintDrc20 as _mintDrc20,
+  inscribeData as _inscribeData,
   transferDrc20,
+  makeWalletFromDogeOrd,
 } from './doginals/doginals';
+import {
+  openDuneTx as _openDuneTx,
+  mintDuneTx as _mintDuneTx,
+  sendDuneTx,
+} from './doginals/dunes';
 import { getSatRange } from './find-ord-index';
 import { makeTransferInscription } from './doginals/inscribeMethods';
+import {
+  getDuneBalances,
+  DuneBalance,
+} from './doginals/dunesMethods/getDunesBalances';
+import { splitDunesUtxosTX } from './doginals/dunes';
+import { DuneInfo, TxInfoResponse, Drc20BalData, Drc20Info } from './doggyfi-apis/interfaces';
+import { fetchDuneInfo } from './doggyfi-apis/dunesInfo';
+import { fetchUTXOs } from './doggyfi-apis/unspents';
+import { fetchTxInfo } from './doggyfi-apis/getTxInfo';
+import { pushTransaction } from './doggyfi-apis/pushTransaction';
+import { getFeeRate } from './doggyfi-apis/getFeeRate';
+import { getUtxosForValue } from './getUtxosForValue';
+import { drc20BalByAddress } from './doggyfi-apis/drc20ByAddress';
+import { getDrc20Info as _getDrc20Info } from './doggyfi-apis/drc20Info';
+import { getTipRate } from './doggyfi-apis/tipRate';
 
-// const dogecoinFormat = coininfo.dogecoin.test.toBitcoinJS();
 const dogecoinFormat = coininfo.dogecoin.main.toBitcoinJS();
 const dogecoinNetwork = {
   messagePrefix: `\x19${dogecoinFormat.name} Signed Message:\n`,
@@ -71,23 +90,113 @@ export const getAddress = async (params: addressParams): Promise<string> => {
 };
 
 export const getTransactions = async (
-  params: addressParams
-): Promise<Transaction[]> => {
-  // TODO: Replace TATUM
-  const myAddress = await getAddress(params);
-  return getAllTxnsForAddress(myAddress);
+  params: addressParams,
+): Promise<TxInfoResponse[]> => {
+  // fetch utxos for the address
+  const utxosResp = await fetchUTXOs(await getAddress(params));
+  if (utxosResp === null) {
+    throw new Error('Could not fetch utxos');
+  }
+  // for each txid, fetch the tx details
+  const transactions: TxInfoResponse[] = [];
+  for (const utxo of utxosResp.unspents) {
+    const txDetailsResponse = await fetchTxInfo(utxo.hash);
+    if (!txDetailsResponse) {
+      throw new Error('Could not fetch transaction details');
+    }
+    const txDetails = txDetailsResponse;
+    transactions.push({
+      txid: txDetails.txid, // this is the txid
+      hex: txDetails.hex, // this is the hex
+      size: txDetails.size,
+      vsize: txDetails.vsize,
+      vin: txDetails.vin,
+      vout: txDetails.vout,
+      blockhash: txDetails.blockhash,
+      confirmations: txDetails.confirmations,
+      time: txDetails.time,
+      blocktime: txDetails.blocktime,
+    });
+  }
+  return transactions;
 };
 
 /**
  * Get the balance for the given address index.
- * 
+ *
  * @param params The parameters for getting the balance.
  * @returns The balance of the address.
  */
 export const getBalance = async (params: addressParams): Promise<number> => {
   const myAddress = await getAddress(params);
-  const balanceResponse = await getBalanceForAddress(myAddress);
-  return Number(balanceResponse) / 10 ** 8;
+  // fetch unspents for the address
+  const utxosResp = await fetchUTXOs(myAddress);
+  if (utxosResp === null) {
+    throw new Error('Could not fetch utxos');
+  }
+  // calculate the balance by summing the values of the unspents
+  let balance = 0;
+  // reduce for balance
+  utxosResp.unspents.reduce((acc, unspent) => {
+    balance += Number(unspent.value);
+    return acc + balance;
+  }, 0);
+
+  return balance / 100_000_000;
+};
+
+/**
+ * Inscribe arbitrary data
+ *
+ * @param params The parameters for inscribing data.
+ * @returns The transaction hash.
+ */
+export const inscribeData = async (
+  params: inscribeDataParams,
+): Promise<[string, string]> => {
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const doggyfiFee = await getTipRate();
+  if (doggyfiFee === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+
+  const [txs, fees] = await _inscribeData(privkey, myAddress, params.data, Number(doggyfiFee.tip), doggyfiFee.tipAddress);
+
+  // ask user to confirm fee
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(`Inscribing this data will cost you the following in DOGE`),
+        copyable((fees / 100_000_000).toString()),
+        text('Please confirm this is OK to continue...'),
+      ]),
+    },
+  });
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
+  // broadcast commit
+  const commitResponse = await pushTransaction(txs[0]);
+  if (commitResponse === null) {
+    throw new Error('Could not broadcast commit');
+  }
+  // broadcast reveal
+  const revealResponse = await pushTransaction(txs[1]);
+  if (!revealResponse) {
+    throw new Error('Could not broadcast reveal');
+  }
+
+  return [commitResponse.txid, revealResponse.txid];
 };
 
 /**
@@ -117,7 +226,7 @@ export const makeTransaction = async ({
   amountInSatoshi,
 }: MakeTransactionParams): Promise<string> => {
   const amountInDoge = amountInSatoshi / SATOSHI_TO_DOGE;
-  const confirmationResponse = await snap.request({
+  let confirmationResponse = await snap.request({
     method: 'snap_dialog',
     params: {
       type: 'confirmation',
@@ -140,33 +249,51 @@ export const makeTransaction = async ({
     network: dogecoinNetwork,
   });
 
-  const account = await getAccount( addressIndex );
+  const account = await getAccount(addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
 
-  const myAddress = await getAddress({addressIndex: addressIndex});
-  const utxos = await getUtxosForValue(myAddress, amountInSatoshi); // this is the broken function....
+  const myAddress = await getAddress({ addressIndex: addressIndex });
+  const utxosResp = await fetchUTXOs(myAddress);
+  if (utxosResp === null) {
+    throw new Error('Could not fetch utxos');
+  }
+  const allUtxos = utxosResp.unspents;
+  // filter out any utxos with inscriptions or dunes, and enough value
+  const utxos = await getUtxosForValue(
+    allUtxos.filter((utxo) => {
+      return utxo.inscriptions.length === 0 && utxo.dunes.length === 0;
+    }),
+    amountInSatoshi,
+  );
 
   if (utxos.length === 0) {
     throw new Error('No unspents for address');
   }
-  const fees = await getFees();
-  const feePerByte = fees.medium;
+  const feesResp = await getFeeRate();
+  if (feesResp === null) {
+    throw new Error('Could not fetch fee rate');
+  }
+  const feePerByte = feesResp;
 
   await Promise.all(
     utxos.map(async (utxo) => {
       let txHex;
       try {
-        txHex = await getTransactionHex(utxo.tx_hash);
+        const txResp = await fetchTxInfo(utxo.hash);
+        if (txResp === null) {
+          throw new Error('Could not fetch transaction details');
+        }
+        txHex = txResp.hex;
       } catch (err: any) {
-        const msg = `error while getting transaction hex${err} ${utxo.tx_hash}`;
+        const msg = `error while getting transaction hex${err} ${utxo.hash}`;
         throw new Error(msg);
       }
 
       psbt.addInput({
-        hash: utxo.tx_hash,
-        index: utxo.tx_output_n, // note this typing is specific to dogeord responses...
+        hash: utxo.hash,
+        index: utxo.vout_index, // note this typing is specific to dogeord responses...
         nonWitnessUtxo: Buffer.from(txHex, 'hex'),
       });
     }),
@@ -174,6 +301,12 @@ export const makeTransaction = async ({
 
   const estimatedTxSize = utxos.length * 180 + 2 * 34 + 10;
   const fee = Math.floor(estimatedTxSize * feePerByte);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
 
   const totalUtxoValue = utxos.reduce(
     (total, curr) => total + Number(curr.value), // Note dogeord unspents you don't need to multiply (might change with another api?)
@@ -191,40 +324,60 @@ export const makeTransaction = async ({
     value: amountInSatoshi,
   });
 
-  try {
-    psbt.addOutput({
-      address: myAddress,
-      value: changeValue,
-    });
-  } catch (err) {
-    console.error('error while adding output', err);
-  }
+
+  psbt.addOutput({
+    address: myAddress,
+    value: changeValue,
+  });
+
+  psbt.addOutput({
+    address: tip.tipAddress,
+    value: Number(tip.tip),
+  });
+
+  // before sigining, confirm with user that they are okay with all fees..
+  confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(`Sending this transaction will cost you the following in DOGE for network fees`),
+        copyable((fee / 100_000_000).toString()),
+        text('And doggyfi will additional charge the following in DOGE'),
+        text('These will be added to the total cost of the transaction'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
+        text('Please confirm this is OK to sign and broadcast the transaction...'),
+      ]),
+    },
+  });
 
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
 
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
-  const txResponse = await broadcastSignedTransaction(txHex);
-  return txResponse;
+  const txResponse = await pushTransaction(txHex);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
 };
 
 /**
  * Signs a PSBT with the selected private key.
- * 
+ *
  * @param addressIndex - The address index to use.
  * @param psbt - The PSBT to sign.
  * @returns The signed PSBT as a hex string.
-*/
-export async function signPsbt(
-  params: signPsbtParams,
-): Promise<string> {
+ */
+export async function signPsbt(params: signPsbtParams): Promise<string> {
   const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
 
-  
   // ask the snap to confirm the signing, give the user a chance to review the transaction
   // this means giving them the hex
   const confirmationResponse = await snap.request({
@@ -239,14 +392,15 @@ export async function signPsbt(
       ]),
     },
   });
-  
-  
+
   if (confirmationResponse !== true) {
     throw new Error('Signing must be approved by user');
   }
-  
-  const psbtCopy = bitcoin.Psbt.fromHex(params.psbtHexString, { network: dogecoinNetwork });
-  
+
+  const psbtCopy = bitcoin.Psbt.fromHex(params.psbtHexString, {
+    network: dogecoinNetwork,
+  });
+
   psbtCopy.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
@@ -256,14 +410,12 @@ export async function signPsbt(
 
 /**
  * Signs a Message with the selected private key.
- * 
+ *
  * @param addressIndex - The address index to use.
  * @param message - The message to sign.
  * @returns The signed message.
  */
-export async function signMessage(
-  params: signMessageParams,
-): Promise<string> {
+export async function signMessage(params: signMessageParams): Promise<string> {
   const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
@@ -287,23 +439,30 @@ export async function signMessage(
     throw new Error('Signing must be approved by user');
   }
 
-  const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes), {
-    network: dogecoinNetwork,
-  });
+  const keyPair = bitcoin.ECPair.fromPrivateKey(
+    Buffer.from(account.privateKeyBytes),
+    {
+      network: dogecoinNetwork,
+    },
+  );
   const privateKey = keyPair.privateKey;
   if (!privateKey) {
     throw new Error('Private key is required');
   }
-  const signature = bitcoinMessage.sign(params.message, privateKey, keyPair.compressed);
+  const signature = bitcoinMessage.sign(
+    params.message,
+    privateKey,
+    keyPair.compressed,
+  );
   return signature.toString('base64');
 }
 
 /**
  * Verifies a message with the selected address.
- * 
- * @param addressIndex 
- * @param message 
- * @param signature 
+ *
+ * @param addressIndex
+ * @param message
+ * @param signature
  * @returns A promise of a boolean indicating if the message is verified.
  */
 export async function verifyMessage(
@@ -331,20 +490,27 @@ export async function verifyMessage(
     throw new Error('Verification must be approved by user');
   }
   const address = await getAddress({ addressIndex: params.addressIndex });
-  const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes), {
-    network: dogecoinNetwork,
-  });
+  const keyPair = bitcoin.ECPair.fromPrivateKey(
+    Buffer.from(account.privateKeyBytes),
+    {
+      network: dogecoinNetwork,
+    },
+  );
   const publicKey = keyPair.publicKey;
   if (!publicKey) {
     throw new Error('Public key is required');
   }
-  return bitcoinMessage.verify(params.message, address, Buffer.from(params.signature, 'base64'));
+  return bitcoinMessage.verify(
+    params.message,
+    address,
+    Buffer.from(params.signature, 'base64'),
+  );
 }
 
 /**
  * Pushes a signed PSBT to the network.
- * 
- * @param psbt 
+ *
+ * @param psbt
  * @returns A promise of the transaction hash.
  */
 export async function pushPsbt(params: pushPsbtParams): Promise<string> {
@@ -365,9 +531,15 @@ export async function pushPsbt(params: pushPsbtParams): Promise<string> {
   if (confirmationResponse !== true) {
     throw new Error('Transaction must be approved by user');
   }
-  const psbt = bitcoin.Psbt.fromHex(params.psbtHexString, { network: dogecoinNetwork });
+  const psbt = bitcoin.Psbt.fromHex(params.psbtHexString, {
+    network: dogecoinNetwork,
+  });
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
-  return await broadcastSignedTransaction(txHex);
+  const txResponse = await pushTransaction(txHex);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
 }
 
 /**
@@ -396,18 +568,27 @@ function deriveBase58PrivateKey(privateKeyBytes: Uint8Array) {
 export async function mintDrc20(
   params: MintDrc20Params,
 ): Promise<[string, string]> {
-  const account = await getAccount( params.addressIndex );
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  const myAddress = await getAddress({addressIndex : params.addressIndex});
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
   const [txs, fees] = await _mintDrc20(
     privkey,
     myAddress,
     params.ticker,
     params.amount,
+    Number(tip.tip),
+    tip.tipAddress,
   );
+
   // ask user to confirm fee
   const confirmationResponse = await snap.request({
     method: 'snap_dialog',
@@ -427,11 +608,17 @@ export async function mintDrc20(
   }
 
   // broadcast commit
-  const commitResponse = await broadcastSignedTransaction(txs[0]);
+  const commitResponse = await pushTransaction(txs[0]);
+  if (commitResponse === null) {
+    throw new Error('Could not push transaction');
+  }
   // broadcast reveal
-  const revealResponse = await broadcastSignedTransaction(txs[1]);
+  const revealResponse = await pushTransaction(txs[1]);
+  if (revealResponse === null) {
+    throw new Error('Could not push transaction');
+  }
 
-  return [commitResponse, revealResponse];
+  return [commitResponse.txid, revealResponse.txid];
 }
 
 /**
@@ -442,17 +629,25 @@ export async function mintDrc20(
 export async function mintTransferDrc20(
   params: InscribeTransferDrc20Params,
 ): Promise<[string, string]> {
-  const account = await getAccount( params.addressIndex );
+  const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  const myAddress = await getAddress({addressIndex : params.addressIndex});
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
   const [txs, fees] = await transferDrc20(
     privkey,
     myAddress,
     params.ticker,
     params.amount,
+    Number(tip.tip),
+    tip.tipAddress,
   );
   // ask user to confirm fee
   const confirmationResponse = await snap.request({
@@ -473,10 +668,16 @@ export async function mintTransferDrc20(
   }
 
   // broadcast commit
-  const commitResponse = await broadcastSignedTransaction(txs[0]);
+  const commitResponse = await pushTransaction(txs[0]);
+  if (commitResponse === null) {
+    throw new Error('Could not push transaction');
+  }
   // broadcast reveal
-  const revealResponse = await broadcastSignedTransaction(txs[1]);
-  return [commitResponse, revealResponse];
+  const revealResponse = await pushTransaction(txs[1]);
+  if (revealResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return [commitResponse.txid, revealResponse.txid];
 }
 
 /**
@@ -485,7 +686,7 @@ export async function mintTransferDrc20(
  * @param tx - The transaction to validate.
  * @returns True if the transaction is a doginal, false otherwise.
  */
-export async function isDoginal(tx: RPCTransaction) {
+export async function isDoginal(tx: TxInfoResponse) {
   const script = tx.vin[0].scriptSig.hex;
   const decompilied = bitcoin.script.decompile(Buffer.from(script, 'hex'));
   if (!decompilied) {
@@ -507,6 +708,381 @@ export async function isDoginal(tx: RPCTransaction) {
 }
 
 /**
+ * Send a Dune.
+ *
+ * @param params - The parameters for sending a Dune.
+ * @returns A promise of the transaction hash.
+ */
+export async function sendDune(params: sendDuneParams) {
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text(`Send the following dune:`),
+        copyable(params.dune.toString()),
+        text('In the amount of'),
+        copyable(params.amount.toString()),
+        text('To the following address:'),
+        copyable(params.toAddress),
+      ]),
+    },
+  });
+
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction must be approved by user');
+  }
+
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress, false);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+
+  const [tx, fees] = await sendDuneTx(
+    wallet,
+    params.toAddress,
+    String(params.amount),
+    params.dune,
+    Number(tip.tip),
+    tip.tipAddress,
+  );
+
+  // ask user to confirm fee
+  const confirmationResponse2 = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(`Sending this Dune will cost you the following in DOGE`),
+        copyable((fees / 100_000_000).toString()),
+        text('And doggyfi will additional charge the following in DOGE'),
+        text('These will be added to the total cost of the transaction'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
+        text('Please confirm this is OK to broadcast the transaction...'),
+      ]),
+    },
+  });
+  if (confirmationResponse2 !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
+  const txResponse = await pushTransaction(tx);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
+}
+
+/**
+ * Deploy an open Dune transaction.
+ *
+ * @param params - The parameters for deploying an open Dune transaction.
+ * @returns A promise of the transaction hash.
+ */
+export async function openDune(params: openDuneTxParams) {
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text(
+          `Deploying an open Dune transaction with the following parameters:`,
+        ),
+        text(`Ticker: ${params.tick}`),
+        text(`Symbol: ${params.symbol}`),
+        text(`Limit: ${params.limit}`),
+        text(`Divisibility: ${params.divisibility}`),
+        text(`Cap: ${params.cap}`),
+        text(`Height Start: ${params.heightStart}`),
+        text(`Height End: ${params.heightEnd}`),
+        text(`Offset Start: ${params.offsetStart}`),
+        text(`Offset End: ${params.offsetEnd}`),
+        text(`Premine: ${params.premine}`),
+        text(`Turbo: ${params.turbo}`),
+        text(`Open Mint: ${params.openMint}`),
+      ]),
+    },
+  });
+
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction must be approved by user');
+  }
+
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+  const [tx, fees] = await _openDuneTx(
+    wallet,
+    params.tick,
+    params.symbol,
+    params.limit,
+    params.divisibility,
+    params.cap,
+    params.heightStart,
+    params.heightEnd,
+    params.offsetStart,
+    params.offsetEnd,
+    params.premine,
+    params.turbo,
+    params.openMint,
+    Number(tip.tip),
+    tip.tipAddress,
+  );
+
+  // ask user to confirm fee
+  const confirmationResponse2 = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(
+          `Deploying this open Dune transaction will cost you the following in DOGE`,
+        ),
+        copyable((fees / 100_000_000).toString()),
+        text('Please confirm this is OK to continue...'),
+      ]),
+    },
+  });
+  if (confirmationResponse2 !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
+  const txResponse = await pushTransaction(tx);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
+}
+/**
+ * Mint a Dune transaction.
+ *
+ * @param params - The parameters for minting a Dune transaction.
+ * @returns A promise of the transaction hash.
+ */
+export async function mintDune(params: mintDuneTxParams) {
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text(`Minting a Dune transaction with the following parameters:`),
+        text(`ID: ${params.id}`),
+        text(`Amount: ${params.amount}`),
+        text(`Receiver: ${params.receiver}`),
+      ]),
+    },
+  });
+
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction must be approved by user');
+  }
+
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+
+  const [tx, fees] = await _mintDuneTx(
+    wallet,
+    params.id,
+    params.amount,
+    params.receiver,
+    Number(tip.tip),
+    tip.tipAddress,
+  );
+
+  // ask user to confirm fee
+  const confirmationResponse2 = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(
+          `Minting this Dune transaction will cost you the following in DOGE`,
+        ),
+        copyable((fees / 100_000_000).toString()),
+        text('Please confirm this is OK to continue...'),
+      ]),
+    },
+  });
+  if (confirmationResponse2 !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
+  const txResponse = await pushTransaction(tx);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
+}
+/**
+ * Split a Dune transaction.
+ *
+ * @param params - The parameters for splitting a Dune transaction.
+ * @returns A promise of the transaction hash.
+ */
+export async function splitDune(params: splitDuneTxParams) {
+  const confirmationResponse = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm transaction'),
+        divider(),
+        text(`Splitting a Dune transaction with the following parameters:`),
+        text(`Dunes: ${params.dune}`),
+        text(`Amounts: ${params.amounts}`),
+        text(`Receivers: ${params.addresses}`),
+      ]),
+    },
+  });
+
+  if (confirmationResponse !== true) {
+    throw new Error('Transaction must be approved by user');
+  }
+
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress);
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+  const [tx, fees] = await splitDunesUtxosTX(
+    wallet,
+    params.dune,
+    params.addresses,
+    params.amounts,
+    Number(tip.tip),
+    tip.tipAddress,
+  );
+
+  // ask user to confirm fee
+  const confirmationResponse2 = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(
+          `Splitting this Dune transaction will cost you the following in DOGE`,
+        ),
+        copyable((fees / 100_000_000).toString()),
+        text('Please confirm this is OK to continue...'),
+      ]),
+    },
+  });
+  if (confirmationResponse2 !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
+  const txResponse = await pushTransaction(tx);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
+}
+
+/**
+ * Get dune balances for the account.
+ *
+ * @param params - The parameters for getting dune metadata.
+ * @returns A promise of the dune metadata.
+ */
+export async function getDuneBalancesForAccount(
+  params: GetDuneBalancesParams,
+): Promise<Map<string, DuneBalance>> {
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Private key is required');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress);
+  return await getDuneBalances(wallet);
+}
+/**
+ * Get dune metadata for a dune.
+ *
+ * @param params - The parameters for getting dune metadata.
+ * @returns A promise of the dune metadata.
+ */
+export async function getDuneMetadata(
+  params: GetDuneMetadataParams,
+): Promise<DuneInfo> {
+  const id = params.duneId;
+  const name = params.duneName;
+  let resp: DuneInfo | null;
+  if (id === undefined && name === undefined) {
+    throw new Error('Must provide either duneId or duneName');
+  } else if (id !== undefined) {
+    resp = await fetchDuneInfo(id);
+  } else if (name !== undefined) {
+    resp = await fetchDuneInfo(name);
+  } else {
+    throw new Error(
+      'Unexpected error getting dune metadata with provided params',
+    );
+  }
+
+  if (resp === null) {
+    throw new Error('Could not fetch dune info');
+  }
+  return resp;
+}
+
+/**
  * Send Doginal.
  *
  * @param _params - The parameters for sending a doginal.
@@ -517,7 +1093,7 @@ export async function isDoginal(tx: RPCTransaction) {
 export async function sendDoginal(
   _params: SendDoginalParams,
   _skipInitialDialog = false,
-  _tx: RPCTransaction | undefined = undefined,
+  _tx: TxInfoResponse | undefined = undefined,
 ): Promise<string> {
   if (!_skipInitialDialog) {
     const confirmationResponse = await snap.request({
@@ -542,44 +1118,23 @@ export async function sendDoginal(
     network: dogecoinNetwork,
   });
 
-  const account = await getAccount( _params.addressIndex );
+  const account = await getAccount(_params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
 
-  const myAddress = await getAddress({addressIndex : _params.addressIndex});
-  let doginalUtxo: DogeOrdUnspent | undefined;
-  if (!doginalUtxo) {
-    // fetch the utxo we need to spend
-    let utxoTx;
-    if (_tx) {
-      utxoTx = _tx;
-    } else {
-      utxoTx = await getRpcTxDtails(_params.utxo);
-    }
+  const myAddress = await getAddress({ addressIndex: _params.addressIndex });
 
-    if (utxoTx && !isDoginal(utxoTx)) {
-      throw new Error('Invalid UTXO for Doginal');
-    }
-    const _voutSciptPubKey = utxoTx.vout[_params.outputIndex || 0];
-    doginalUtxo = {
-      tx_hash: _params.utxo,
-      address: myAddress,
-      tx_output_n: _params.outputIndex || 0,
-      value: String(_voutSciptPubKey.value * 100_000_000),
-      confirmations: utxoTx.confirmations,
-      script: _voutSciptPubKey.scriptPubKey.hex,
-    };
+  const txResp = await fetchTxInfo(_params.utxo);
+  if (txResp === null) {
+    throw new Error('Could not fetch transaction details');
   }
 
   // add doginal as 0th input
   psbt.addInput({
-    hash: doginalUtxo.tx_hash,
-    index: doginalUtxo.tx_output_n,
-    nonWitnessUtxo: Buffer.from(
-      await getTransactionHex(doginalUtxo.tx_hash),
-      'hex',
-    ),
+    hash: txResp.txid,
+    index: _params.outputIndex || 0,
+    nonWitnessUtxo: Buffer.from(txResp.hex, 'hex'),
   });
 
   // add inscription output
@@ -588,31 +1143,21 @@ export async function sendDoginal(
     value: 100_000, // 100,000 shibes, this is the min amount amount
   });
 
-  const fees = await getFees();
-  const feePerByte = fees.medium;
+  const fees = await getFeeRate();
+  if (fees === null) {
+    throw new Error('Could not fetch fee rate');
+  }
+  const feePerByte = fees;
 
   const estimatedTxSize = psbt.toBuffer().byteLength;
   const estimatedFee = Math.floor(estimatedTxSize * feePerByte);
 
-  const confirmationResponse2 = await snap.request({
-    method: 'snap_dialog',
-    params: {
-      type: 'confirmation',
-      content: panel([
-        heading('Confirm Fee Rate'),
-        divider(),
-        text(`Sending this doginal will cost you the following in DOGE`),
-        copyable((estimatedFee / 100_000_000).toString()),
-        text('Please confirm this is OK to continue...'),
-      ]),
-    },
-  });
-  if (confirmationResponse2 !== true) {
-    throw new Error('Transaction fee must be approved by user');
-  }
-
   // fetch the utxos to fund the fee
-  const utxos = await getUtxosForValue(myAddress, estimatedFee);
+  const unspentsResp = await fetchUTXOs(myAddress);
+  if (unspentsResp === null) {
+    throw new Error('Could not fetch utxos');
+  }
+  const utxos = await getUtxosForValue(unspentsResp.unspents, estimatedFee);
   if (utxos.length === 0) {
     throw new Error('No unspents for address');
   }
@@ -628,15 +1173,15 @@ export async function sendDoginal(
       // if (utxo.tx_hash !== drc20_utxo.tx_hash) {
       let txHex;
       try {
-        txHex = await getTransactionHex(iutxo.tx_hash);
+        txHex = txResp.hex;
       } catch (err: any) {
-        const msg = `error while getting transaction hex${err} ${iutxo.tx_hash}`;
+        const msg = `error while getting transaction hex${err} ${txResp.txid}`;
         throw new Error(msg);
       }
 
       psbt.addInput({
-        hash: iutxo.tx_hash,
-        index: iutxo.tx_output_n, // note this typing is specific to dogeord responses...
+        hash: iutxo.hash,
+        index: iutxo.vout_index,
         nonWitnessUtxo: Buffer.from(txHex, 'hex'),
       });
     }),
@@ -657,13 +1202,46 @@ export async function sendDoginal(
     value: changeValue,
   });
 
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+  psbt.addOutput({
+    address: tip.tipAddress,
+    value: Number(tip.tip),
+  });
+
+  const confirmationResponse2 = await snap.request({
+    method: 'snap_dialog',
+    params: {
+      type: 'confirmation',
+      content: panel([
+        heading('Confirm Fee Rate'),
+        divider(),
+        text(`Sending this doginal will cost you the following in DOGE`),
+        copyable((estimatedFee / 100_000_000).toString()),
+        text('And doggyfi will additional charge the following in DOGE'),
+        text('These will be added to the total cost of the transaction'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
+        text('Please confirm this is OK to sign and broadcast the transaction...'),
+      ]),
+    },
+  });
+  if (confirmationResponse2 !== true) {
+    throw new Error('Transaction fee must be approved by user');
+  }
+
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
 
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
-  const txResponse = await broadcastSignedTransaction(txHex);
-  return txResponse;
+  const txResponse = await pushTransaction(txHex);
+  if (txResponse === null) {
+    throw new Error('Could not push transaction');
+  }
+  return txResponse.txid;
 }
 
 /**
@@ -691,10 +1269,14 @@ export async function sendDrc20(_params: sendDrc20Params): Promise<string> {
   if (confirmationResponse !== true) {
     throw new Error('Transaction must be approved by user');
   }
+  const txResp = await fetchTxInfo(_params.utxo);
+  if (txResp === null) {
+    throw new Error('Could not fetch transaction details');
+  }
 
   // fetch the tx for the hash, validate which index is the transferable output
   const { startIndex, endIndex } = await getSatRange(
-    await getRpcTxDtails(_params.utxo),
+    txResp,
     await getAddress({ addressIndex: _params.addressIndex }),
     makeTransferInscription(
       'drc-20',
@@ -752,6 +1334,13 @@ export async function deployDrc20(
   }
   const myAddress = await getAddress({ addressIndex: params.addressIndex });
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
+
+  // get doggyfi-api tip
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+
   const [txs, fees] = await mintDeploy(
     privkey,
     myAddress,
@@ -759,6 +1348,8 @@ export async function deployDrc20(
     params.maxSupply,
     params.lim,
     params.decimals,
+    Number(tip.tip),
+    tip.tipAddress,
   );
 
   // ask user to confirm fee
@@ -771,7 +1362,10 @@ export async function deployDrc20(
         divider(),
         text(`Deploying this DRC20 will cost you the following in DOGE`),
         copyable((fees / 100_000_000).toString()),
-        text('Please confirm this is OK to continue...'),
+        text('And doggyfi will additional charge the following in DOGE'),
+        text('These will be added to the total cost of the transaction'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
+        text('Please confirm this is OK to broadcast the transaction...'),
       ]),
     },
   });
@@ -780,9 +1374,67 @@ export async function deployDrc20(
   }
 
   // broadcast commit
-  const commitResponse = await broadcastSignedTransaction(txs[0]);
+  const commitResponse = await pushTransaction(txs[0]);
+  if (commitResponse === null) {
+    throw new Error('Could not push transaction');
+  }
   // broadcast reveal
-  const revealResponse = await broadcastSignedTransaction(txs[1]);
+  const revealResponse = await pushTransaction(txs[1]);
+  if (revealResponse === null) {
+    throw new Error('Could not push transaction');
+  }
 
-  return [commitResponse, revealResponse];
+  return [commitResponse.txid, revealResponse.txid];
+}
+
+/**
+ * Return response from DoggyFi API for DRC20 balance for an address.
+ *
+ * @param params - The parameters for getting the DRC20 balance.
+ * @returns The DRC20 balance.
+ */
+export async function getDrc20Balance(
+  params: addressParams,
+): Promise<Drc20BalData> {
+  const account = await getAccount(params.addressIndex);
+  if (!account.privateKeyBytes) {
+    throw new Error('Unable to decode private key bytes');
+  }
+
+  const myAddress = await getAddress({ addressIndex: params.addressIndex });
+  return await drc20BalByAddress(myAddress);
+}
+
+/**
+ * Get drc20 info for a ticker.
+ * 
+ * @param params - The parameters for getting the drc20 info.
+ * @returns The drc20 info.
+ */
+export async function getDrc20Info(
+  params: Drc20InfoParams,
+): Promise<Drc20Info> {
+  const info = await _getDrc20Info(params.ticker);
+  if (info === null) {
+    throw new Error('Could not fetch drc20 info');
+  }
+  return info;
+}
+
+/**
+ * Add doggyfi-api tip to a transaction.
+ * 
+ * @params psbt - The psbt to add the tip to.
+ * @returns The psbt with the tip added.
+ */
+export async function addTip(psbt: bitcoin.Psbt): Promise<[bitcoin.Psbt, number]> {
+  const tip = await getTipRate();
+  if (tip === null) {
+    throw new Error('Could not fetch tip rate');
+  }
+  psbt.addOutput({
+    address: tip.tipAddress,
+    value: Number(tip.tip),
+  });
+  return [psbt, Number(tip.tip)];
 }

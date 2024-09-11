@@ -1,15 +1,20 @@
 // Makes a returns a json structure similar to how apezord wallet in doginals repo would make it
-export type UTXO = {
-  txid: string;
-  vout: number;
-  script: string;
-  satoshis: number;
-};
+import { Dune, Inscription } from '../doggyfi-apis/interfaces';
 
 export type Wallet = {
   privkey: string;
   address: string;
-  utxos: UTXO[];
+  utxos: APEUTXO[];
+};
+
+// apezord comptible utxo with dunes and inscriptions
+export type APEUTXO = {
+  txid: string;
+  vout: number;
+  satoshis: number;
+  dunes: Dune[];
+  inscriptions: Inscription[];
+  script: string;
 };
 
 /**
@@ -23,7 +28,7 @@ export type Wallet = {
 export function createWallet(
   privkey: string,
   address: string,
-  utxos: UTXO[],
+  utxos: APEUTXO[],
 ): Wallet {
   return {
     privkey,

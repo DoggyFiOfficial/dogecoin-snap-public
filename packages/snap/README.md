@@ -30,6 +30,6 @@ The snap exposes the following [RPC API](./src/rpc.ts):
 - `doge_makeTransaction` - accepts a target address and amount in satoshis, and broadcasts a transaction to the network
 - `doge_mintDrc20` - mints a drc20
 - `doge_mintTransferDrc20` - mints a transfer inscription for a drc20 token
-- `doge_sendDrc20` - sends a transfer inscription for a drc-20 token  
-- `doge_deployDrc20` - mints a deploy inscription for a drc-20 token  
+- `doge_sendDrc20` - sends a transfer inscription for a drc-20 token
+- `doge_deployDrc20` - mints a deploy inscription for a drc-20 token
 - `doge_sendDoginal` - accepts a utxo and vout for a doingal and spends it to a specified address

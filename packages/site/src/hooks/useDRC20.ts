@@ -145,7 +145,7 @@ export const useSendDRC20 = () => {
       setError(undefined);
       setLastTxId(undefined);
       setIsLoading(true);
-      const addressIndex = data.get('addressIndex')
+      const addressIndex = data.get('addressIndex');
       const toAddress = data.get('toAddress');
       const utxo = data.get('utxo');
       const ticker = data.get('ticker');

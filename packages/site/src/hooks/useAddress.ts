@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getAddress } from '../utils';
 
-export const useAddress = (isSnapInstalled: boolean, _addressIndex : number) => {
+export const useAddress = (isSnapInstalled: boolean, _addressIndex: number) => {
   const [address, setAddress] = useState<string | undefined>();
 
   useEffect(() => {
