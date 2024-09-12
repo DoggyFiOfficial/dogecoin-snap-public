@@ -1,4 +1,4 @@
-import { assert } from "console";
+import { assert } from 'console';
 
 export type MakeTransactionParams = {
   addressIndex: number;
@@ -49,6 +49,7 @@ export type DeployDrc20Params = {
 export type signPsbtParams = {
   addressIndex: number;
   psbtHexString: string;
+  signIndices?: number[];
 };
 export type pushPsbtParams = {
   psbtHexString: string;
@@ -166,6 +167,29 @@ export function assertIsSignPsbtParams(
     )
   ) {
     throw new Error('params must be instance of `signPsbtParams`');
+  } else {
+    // if signIndicies is provided, provide flag to check it is an array of non-negative integers
+    if ('signIndices' in params &&
+       params.signIndices !== null) {
+      if (!Array.isArray(params.signIndices)) {
+        throw new Error('signIndices must be an array of integers');
+      }
+      for (const i of params.signIndices) {
+        if (typeof i !== 'number') {
+          throw new Error(
+            'signIndices must be an array of non-negative integers'
+          );
+        } else if (i < 0) {
+          throw new Error(
+            'signIndices must be an array of non-negative integers'
+          );
+        } else if (Number.isInteger(i)) {
+          throw new Error(
+            'signIndices must be an array of non-negative integers'
+          );
+        }
+      }
+    }
   }
 }
 /**
@@ -454,7 +478,12 @@ export function assertIsOpenDuneTxParams(
   }
 
   // limit is optional
-  if ('limit' in params && params.limit !== null && params.limit !== undefined && params.limit !== "") {
+  if (
+    'limit' in params &&
+    params.limit !== null &&
+    params.limit !== undefined &&
+    params.limit !== ''
+  ) {
     if (
       !('limit' in params) ||
       typeof params.limit !== 'string' ||
@@ -478,8 +507,17 @@ export function assertIsOpenDuneTxParams(
   }
 
   // cap is optional
-  if ('cap' in params && params.cap !== null && params.cap !== undefined && params.cap !== "") {
-    if (!('cap' in params) || typeof params.cap !== 'string' || !(BigInt(params.cap) > BigInt(0))) {
+  if (
+    'cap' in params &&
+    params.cap !== null &&
+    params.cap !== undefined &&
+    params.cap !== ''
+  ) {
+    if (
+      !('cap' in params) ||
+      typeof params.cap !== 'string' ||
+      !(BigInt(params.cap) > BigInt(0))
+    ) {
       throw new Error(
         'params must include a valid `cap` of type number and greater than 0',
       );
@@ -487,18 +525,30 @@ export function assertIsOpenDuneTxParams(
   }
 
   // heightStart and heightEnd are optional
-  if ('heightStart' in params && params.heightStart !== null && params.heightStart !== undefined && params.heightStart !== "") {
+  if (
+    'heightStart' in params &&
+    params.heightStart !== null &&
+    params.heightStart !== undefined &&
+    params.heightStart !== ''
+  ) {
     if (
       !('heightStart' in params) ||
       typeof params.heightStart !== 'number' ||
       params.heightStart <= 0
     ) {
       throw new Error(
-        'params must include a valid `heightStart` of type number and greater than 0 but got heightStart ' + params.heightStart + ' <--',
+        'params must include a valid `heightStart` of type number and greater than 0 but got heightStart ' +
+          params.heightStart +
+          ' <--',
       );
     }
 
-    if ('heightEnd' in params && params.heightEnd !== null && params.heightEnd !== undefined && params.heightEnd !== "") {
+    if (
+      'heightEnd' in params &&
+      params.heightEnd !== null &&
+      params.heightEnd !== undefined &&
+      params.heightEnd !== ''
+    ) {
       if (
         !('heightEnd' in params) ||
         typeof params.heightEnd !== 'number' ||
@@ -511,7 +561,12 @@ export function assertIsOpenDuneTxParams(
     }
   } else {
     // if heightEnd is provided but heightStart is not, throw error
-    if ('heightEnd' in params && params.heightEnd !== null && params.heightEnd !== undefined && params.heightEnd !== "") {
+    if (
+      'heightEnd' in params &&
+      params.heightEnd !== null &&
+      params.heightEnd !== undefined &&
+      params.heightEnd !== ''
+    ) {
       throw new Error(
         'params must include a valid `heightEnd` of type number and greater than 0',
       );
@@ -519,7 +574,12 @@ export function assertIsOpenDuneTxParams(
   }
 
   // offsetStart and offsetEnd are optional
-  if ('offsetStart' in params && params.offsetStart !== null && params.offsetStart !== undefined && params.offsetStart !== "") {
+  if (
+    'offsetStart' in params &&
+    params.offsetStart !== null &&
+    params.offsetStart !== undefined &&
+    params.offsetStart !== ''
+  ) {
     if (
       !('offsetStart' in params) ||
       typeof params.offsetStart !== 'number' ||
@@ -541,7 +601,12 @@ export function assertIsOpenDuneTxParams(
     }
   } else {
     // if offsetEnd is provided but offsetStart is not, throw error
-    if ('offsetEnd' in params && params.offsetEnd !== null && params.offsetEnd !== undefined && params.offsetEnd !== "") {
+    if (
+      'offsetEnd' in params &&
+      params.offsetEnd !== null &&
+      params.offsetEnd !== undefined &&
+      params.offsetEnd !== ''
+    ) {
       throw new Error(
         'params must include a valid `offsetEnd` of type number and greater than or equal to 0',
       );
@@ -889,7 +954,7 @@ export function assertIsDeployDrc20Params(
 
 /**
  * Throws if value passed in isn't of type Drc20InfoParams
- * 
+ *
  * @param params - The value to be checked.
  */
 export function assertIsDrc20InfoParams(

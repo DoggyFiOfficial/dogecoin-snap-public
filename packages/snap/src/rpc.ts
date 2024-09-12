@@ -45,7 +45,12 @@ import {
   DuneBalance,
 } from './doginals/dunesMethods/getDunesBalances';
 import { splitDunesUtxosTX } from './doginals/dunes';
-import { DuneInfo, TxInfoResponse, Drc20BalData, Drc20Info } from './doggyfi-apis/interfaces';
+import {
+  DuneInfo,
+  TxInfoResponse,
+  Drc20BalData,
+  Drc20Info,
+} from './doggyfi-apis/interfaces';
 import { fetchDuneInfo } from './doggyfi-apis/dunesInfo';
 import { fetchUTXOs } from './doggyfi-apis/unspents';
 import { fetchTxInfo } from './doggyfi-apis/getTxInfo';
@@ -165,7 +170,13 @@ export const inscribeData = async (
     throw new Error('Could not fetch tip rate');
   }
 
-  const [txs, fees] = await _inscribeData(privkey, myAddress, params.data, Number(doggyfiFee.tip), doggyfiFee.tipAddress);
+  const [txs, fees] = await _inscribeData(
+    privkey,
+    myAddress,
+    params.data,
+    Number(doggyfiFee.tip),
+    doggyfiFee.tipAddress,
+  );
 
   // ask user to confirm fee
   const confirmationResponse = await snap.request({
@@ -324,7 +335,6 @@ export const makeTransaction = async ({
     value: amountInSatoshi,
   });
 
-
   psbt.addOutput({
     address: myAddress,
     value: changeValue,
@@ -343,12 +353,16 @@ export const makeTransaction = async ({
       content: panel([
         heading('Confirm Fee Rate'),
         divider(),
-        text(`Sending this transaction will cost you the following in DOGE for network fees`),
+        text(
+          `Sending this transaction will cost you the following in DOGE for network fees`,
+        ),
         copyable((fee / 100_000_000).toString()),
         text('And doggyfi will additional charge the following in DOGE'),
         text('These will be added to the total cost of the transaction'),
         copyable((Number(tip.tip) / 100_000_000).toString()),
-        text('Please confirm this is OK to sign and broadcast the transaction...'),
+        text(
+          'Please confirm this is OK to sign and broadcast the transaction...',
+        ),
       ]),
     },
   });
@@ -401,9 +415,18 @@ export async function signPsbt(params: signPsbtParams): Promise<string> {
     network: dogecoinNetwork,
   });
 
-  psbtCopy.signAllInputs(
-    bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
-  );
+  if (!params.signIndices) {
+    psbtCopy.signAllInputs(
+      bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+    );
+  } else {
+    for (const i of params.signIndices) {
+      psbtCopy.signInput(
+        i,
+        bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+      );
+    }
+  }
 
   return psbtCopy.toHex();
 }
@@ -868,7 +891,9 @@ export async function openDune(params: openDuneTxParams) {
           `Deploying this open Dune transaction will cost you the following in DOGE`,
         ),
         copyable((fees / 100_000_000).toString()),
-        text('Please confirm this is OK to continue...'),
+        text('In addition to this, doggyfi will charge a fee of'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
+        text('Please confirm this is OK to broadcast the transaction...'),
       ]),
     },
   });
@@ -1224,7 +1249,9 @@ export async function sendDoginal(
         text('And doggyfi will additional charge the following in DOGE'),
         text('These will be added to the total cost of the transaction'),
         copyable((Number(tip.tip) / 100_000_000).toString()),
-        text('Please confirm this is OK to sign and broadcast the transaction...'),
+        text(
+          'Please confirm this is OK to sign and broadcast the transaction...',
+        ),
       ]),
     },
   });
@@ -1407,7 +1434,7 @@ export async function getDrc20Balance(
 
 /**
  * Get drc20 info for a ticker.
- * 
+ *
  * @param params - The parameters for getting the drc20 info.
  * @returns The drc20 info.
  */
@@ -1423,11 +1450,13 @@ export async function getDrc20Info(
 
 /**
  * Add doggyfi-api tip to a transaction.
- * 
+ *
  * @params psbt - The psbt to add the tip to.
  * @returns The psbt with the tip added.
  */
-export async function addTip(psbt: bitcoin.Psbt): Promise<[bitcoin.Psbt, number]> {
+export async function addTip(
+  psbt: bitcoin.Psbt,
+): Promise<[bitcoin.Psbt, number]> {
   const tip = await getTipRate();
   if (tip === null) {
     throw new Error('Could not fetch tip rate');
