@@ -137,7 +137,8 @@ export const getBalance = async (params: addressParams): Promise<number> => {
   // fetch unspents for the address
   const utxosResp = await fetchUTXOs(myAddress);
   if (utxosResp === null) {
-    throw new Error('Could not fetch utxos');
+    console.log('UTXO response is null, returning 0');
+    return 0;
   }
   // calculate the balance by summing the values of the unspents
   let balance = 0;
