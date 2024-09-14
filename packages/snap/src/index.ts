@@ -20,6 +20,7 @@ import {
   getDuneBalancesForAccount,
   getDuneMetadata,
   getDrc20Balance,
+  inscribeData
 } from './rpc';
 import {
   assertIsMakeTransactionParams,
@@ -38,6 +39,7 @@ import {
   assertIsSplitDuneTxParams,
   assertIsSendDuneParams,
   assertIsGetDuneMetadataParams,
+  assertIsInscribeData,
 } from './types';
 
 export * from './rpc-types';
@@ -121,6 +123,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ request }) => {
     case 'doge_getDrc20Balance':
       assertIsAddressParams(request.params);
       return getDrc20Balance(request.params);
+
+    case 'doge_inscribeData':
+      assertIsInscribeData(request.params);
+      return inscribeData(request.params);
 
     default:
       throw new Error('Method not found.');
