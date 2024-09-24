@@ -38,7 +38,6 @@ export const _mintDuneTx = async (
   id,
   amount,
   receiver,
-  dunesBalance,
   doggyfiFee,
   doggyfiAddress,
 ) => {
@@ -69,7 +68,7 @@ export const _mintDuneTx = async (
   // finally add doggyfi fee
   tx.to(doggyfiAddress, doggyfiFee);
 
-  await fund(wallet, tx, dunesBalance);
+  await fund(wallet, tx);
 
   let serializedTx = tx.uncheckedSerialize();
   let _fees = tx.inputAmount - tx.outputAmount;

@@ -137,9 +137,7 @@ export async function mintDuneTx(
     amount = _amount;
   }
 
-  const dunesBalances = await getDuneBalances(wallet);
-
-  const res = await _mintDuneTx(wallet, id, amount, receiver, dunesBalances, doggyfiFee, doggyfiAddress);
+  const res = await _mintDuneTx(wallet, id, amount, receiver, doggyfiFee, doggyfiAddress);
 
   return [res['tx'], res['fees']];
 }
