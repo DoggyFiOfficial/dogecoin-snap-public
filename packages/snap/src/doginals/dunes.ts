@@ -118,7 +118,6 @@ export async function mintDuneTx(
             bigIntScaler).toString();
       } else if (
         duneData.terms.mint_txs_cap !== null &&
-        duneData.terms.mint_txs_cap !== null &&
         BigInt(duneData.terms.mint_txs_cap) > BigInt(0)
       ) {
         amount = (BigInt(duneData.terms.mint_txs_cap) * bigIntScaler).toString();
