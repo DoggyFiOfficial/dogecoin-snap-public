@@ -190,7 +190,6 @@ export async function sendDuneTx(
   doggyfiFee: number,
   doggyfiAddress: string,
 ): Promise<[string, number]> {
-  //throw new Error ("Got dune balances");
   const _ = await extractDuneUtxos(wallet, [amount], dune, true);
 
   if (_ === null) {
@@ -198,7 +197,6 @@ export async function sendDuneTx(
       `Insufficient dune balance found for dune ${dune} with amount ${amount}`,
     );
   }
-  // let specificDunesDogeOrd = _.specificDunes;
   let utxos = _.duneUtxos;
   let totalDuneBalance = _.totalAmount;
 
