@@ -8,7 +8,6 @@ import { getBlockCount } from '../queries';
 import { extractDuneUtxos } from './dunesMethods/extractDuneUtxo';
 import { getDuneBalances, DuneBalance } from './dunesMethods/getDunesBalances';
 import { fetchDuneInfo } from '../doggyfi-apis/dunesInfo';
-import { bigint } from '../../dist/bundle';
 
 /**
  * Checks which utxos don't have dunes based on a list of dunes for the wallet.
@@ -90,51 +89,23 @@ export async function mintDuneTx(
   receiver: string,
   doggyfiFee: number,
   doggyfiAddress: string,
-  mintAll: boolean = false,
 ): Promise<[string, number]> {
-  const duneData = await fetchDuneInfo(id);
+  const duneData = await fetchDuneInfo(id); // check if output has changed
   if (duneData === null) {
     throw new Error('Could not fetch dune info for dune/id ' + id);
   }
-
-  // check that the dune is open to mint
-  const bigInt10 = BigInt(10);
-  const bigIntDecimals = BigInt(duneData.divisibility);
-  const bigIntScaler = bigInt10 ** bigIntDecimals;
-  let amount: string;
-  if (mintAll) {
-    if (
-      duneData.terms.amount_per_mint &&
-      BigInt(duneData.terms.amount_per_mint) > 0 &&
-      duneData.divisibility !== undefined &&
-      Number(duneData.divisibility) > 0
-    ) {
-      if (
-        duneData.terms.amount_per_mint !== undefined &&
-        duneData.terms.amount_per_mint !== null &&
-        BigInt(duneData.terms.amount_per_mint) > BigInt(0)
-      ) {
-        amount = (BigInt(duneData.terms.amount_per_mint) *
-            bigIntScaler).toString();
-      } else if (
-        duneData.terms.mint_txs_cap !== null &&
-        BigInt(duneData.terms.mint_txs_cap) > BigInt(0)
-      ) {
-        amount = (BigInt(duneData.terms.mint_txs_cap) * bigIntScaler).toString();
-      } else {
-        throw new Error('No specified limit or cap');
-      }
-    } else {
-      throw new Error('Could not fetch dune data');
-    }
+  const amount = BigInt(_amount);
+  let mintCap: bigint | null;
+  if (duneData.terms.amount_per_mint) {
+    mintCap = moveDecimalToRight(String(duneData.terms.amount_per_mint));
   } else {
-    // see if their is a mint limit
-    if (duneData.terms.amount_per_mint !== null) {
-      if (BigInt(_amount) > BigInt(duneData.terms.amount_per_mint)) {
-        throw new Error('Mint amount exceeds mint cap');
-      }
+    mintCap = null
+  }
+  // if there is a mint cap, check if the amount is within the cap
+  if (mintCap) {
+    if (amount > mintCap) { // check line
+      throw new Error('Mint amount exceeds mint cap');
     }
-    amount = _amount;
   }
 
   const res = await _mintDuneTx(wallet, id, amount, receiver, doggyfiFee, doggyfiAddress);
@@ -259,4 +230,15 @@ export async function sendDuneTx(
   }
 
   return [tx, fees];
+}
+
+function moveDecimalToRight(value: string): bigint {
+  // 1. Remove the decimal point by splitting on it
+  const [integerPart, fractionalPart] = value.split('.');
+
+  // 2. Combine the integer and fractional parts into a single string
+  const combined = integerPart + (fractionalPart || "");
+
+  // 3. Convert the result into a BigInt
+  return BigInt(combined);
 }
