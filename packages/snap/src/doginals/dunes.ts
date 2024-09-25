@@ -210,7 +210,6 @@ export async function sendDuneTx(
     if (resp === null) {
       throw new Error('Could not fetch dune info');
     }
-    const duneID = resp.id;
     const res = await _sendExactDuneTx(wallet, address, utxos[0], doggyfiFee, doggyfiAddress);
     tx = res['tx'];
     fees = res['fees'];
