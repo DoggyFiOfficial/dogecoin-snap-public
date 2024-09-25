@@ -190,7 +190,6 @@ export async function sendDuneTx(
   doggyfiFee: number,
   doggyfiAddress: string,
 ): Promise<[string, number]> {
-  const duneBalances = await getDuneBalances(wallet);
   //throw new Error ("Got dune balances");
   const _ = await extractDuneUtxos(wallet, [amount], dune, true);
 
