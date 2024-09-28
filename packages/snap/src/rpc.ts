@@ -311,8 +311,10 @@ export const makeTransaction = async ({
     }),
   );
 
-  const estimatedTxSize = utxos.length * 180 + 2 * 34 + 10;
-  const fee = Math.floor(estimatedTxSize * feePerByte);
+  const numInputs = psbt.inputCount
+  const numOutputs = psbt.txOutputs.length + 3
+  const size = 10 + numInputs * 148 + numOutputs * 34
+  const fee = size * Math.max(feePerByte || 100_000, 50_000)
 
   // get doggyfi-api tip
   const tip = await getTipRate();
@@ -1166,24 +1168,25 @@ export async function sendDoginal(
   // add inscription output
   psbt.addOutput({
     address: _params.toAddress,
-    value: 100_000, // 100,000 shibes, this is the min amount amount
+    value: 100_000, // 100,000 shibes, this is the min amount
   });
 
-  const fees = await getFeeRate();
-  if (fees === null) {
+  const feePerByte = await getFeeRate();
+  if (feePerByte === null) {
     throw new Error('Could not fetch fee rate');
   }
-  const feePerByte = fees;
-
-  const estimatedTxSize = psbt.toBuffer().byteLength;
-  const estimatedFee = Math.floor(estimatedTxSize * feePerByte);
+  const numInputs = psbt.inputCount
+  const numOutputs = psbt.txOutputs.length + 3
+  const size = 10 + numInputs * 148 + numOutputs * 34
+  const fee = size * Math.max(feePerByte || 100_000, 50_000)
 
   // fetch the utxos to fund the fee
   const unspentsResp = await fetchUTXOs(myAddress);
   if (unspentsResp === null) {
     throw new Error('Could not fetch utxos');
   }
-  const utxos = await getUtxosForValue(unspentsResp.unspents, estimatedFee);
+  const utxos = await getUtxosForValue(unspentsResp.unspents, fee);
+  console.table(utxos)
   if (utxos.length === 0) {
     throw new Error('No unspents for address');
   }
@@ -1214,7 +1217,7 @@ export async function sendDoginal(
   );
 
   // calculate change amount to return to sender
-  const changeValue = Math.floor(totalUtxoValue - estimatedFee - 100_000);
+  const changeValue = Math.floor(totalUtxoValue - fee - 100_000);
 
   if (changeValue < 0) {
     throw new Error(
@@ -1246,7 +1249,7 @@ export async function sendDoginal(
         heading('Confirm Fee Rate'),
         divider(),
         text(`Sending this doginal will cost you the following in DOGE`),
-        copyable((estimatedFee / 100_000_000).toString()),
+        copyable((fee / 100_000_000).toString()),
         text('And doggyfi will additional charge the following in DOGE'),
         text('These will be added to the total cost of the transaction'),
         copyable((Number(tip.tip) / 100_000_000).toString()),
@@ -1260,11 +1263,13 @@ export async function sendDoginal(
     throw new Error('Transaction fee must be approved by user');
   }
 
+
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
 
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
+  
   const txResponse = await pushTransaction(txHex);
   if (txResponse === null) {
     throw new Error('Could not push transaction');

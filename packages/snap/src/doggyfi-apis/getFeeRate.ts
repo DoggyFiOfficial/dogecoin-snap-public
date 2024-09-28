@@ -10,7 +10,7 @@ export async function getFeeRate(): Promise<number | null> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result: number = await response.json();
+    const result: number = await response.json().then(r => r.feeRate);
 
     return result;
   } catch (error) {
