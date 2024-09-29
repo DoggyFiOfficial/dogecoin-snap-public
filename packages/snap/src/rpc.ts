@@ -60,6 +60,7 @@ import { getUtxosForValue } from './getUtxosForValue';
 import { drc20BalByAddress } from './doggyfi-apis/drc20ByAddress';
 import { getDrc20Info as _getDrc20Info } from './doggyfi-apis/drc20Info';
 import { getTipRate } from './doggyfi-apis/tipRate';
+import { json } from 'stream/consumers';
 
 const dogecoinFormat = coininfo.dogecoin.main.toBitcoinJS();
 const dogecoinNetwork = {
@@ -373,7 +374,6 @@ export const makeTransaction = async ({
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
-
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
   const txResponse = await pushTransaction(txHex);
   if (txResponse === null) {
@@ -1186,7 +1186,6 @@ export async function sendDoginal(
     throw new Error('Could not fetch utxos');
   }
   const utxos = await getUtxosForValue(unspentsResp.unspents, fee);
-  console.table(utxos)
   if (utxos.length === 0) {
     throw new Error('No unspents for address');
   }
@@ -1200,14 +1199,17 @@ export async function sendDoginal(
   await Promise.all(
     utxos.map(async (iutxo) => {
       // if (utxo.tx_hash !== drc20_utxo.tx_hash) {
-      let txHex;
+      let txHex : string | undefined;
       try {
-        txHex = txResp.hex;
+        // get the txHex of the utxo
+        txHex = (await fetchTxInfo(iutxo.hash))?.hex;
       } catch (err: any) {
         const msg = `error while getting transaction hex${err} ${txResp.txid}`;
         throw new Error(msg);
       }
-
+      if (txHex === undefined) {
+        throw new Error("Could not get txHex");
+      }
       psbt.addInput({
         hash: iutxo.hash,
         index: iutxo.vout_index,
@@ -1263,13 +1265,12 @@ export async function sendDoginal(
     throw new Error('Transaction fee must be approved by user');
   }
 
-
+  // log hex string of the psbt
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
-
+  psbt.finalizeAllInputs();
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
-  
   const txResponse = await pushTransaction(txHex);
   if (txResponse === null) {
     throw new Error('Could not push transaction');
