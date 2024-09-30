@@ -60,7 +60,6 @@ import { getUtxosForValue } from './getUtxosForValue';
 import { drc20BalByAddress } from './doggyfi-apis/drc20ByAddress';
 import { getDrc20Info as _getDrc20Info } from './doggyfi-apis/drc20Info';
 import { getTipRate } from './doggyfi-apis/tipRate';
-import { json } from 'stream/consumers';
 
 const dogecoinFormat = coininfo.dogecoin.main.toBitcoinJS();
 const dogecoinNetwork = {
@@ -1069,7 +1068,7 @@ export async function splitDune(params: splitDuneTxParams) {
  */
 export async function getDuneBalancesForAccount(
   params: GetDuneBalancesParams,
-): Promise<Map<string, DuneBalance>> {
+): Promise<Object> {
   const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
@@ -1077,8 +1076,9 @@ export async function getDuneBalancesForAccount(
 
   const myAddress = await getAddress({ addressIndex: params.addressIndex });
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
-  const wallet = await makeWalletFromDogeOrd(privkey, myAddress);
-  return await getDuneBalances(wallet);
+  const wallet = await makeWalletFromDogeOrd(privkey, myAddress, false);
+  const res = await getDuneBalances(wallet);
+  return res;
 }
 /**
  * Get dune metadata for a dune.

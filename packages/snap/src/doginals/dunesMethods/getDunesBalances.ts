@@ -13,27 +13,37 @@ export interface DuneBalance {
 
 export async function getDuneBalances(
   wallet: Wallet,
-): Promise<Map<string, DuneBalance>> {
+): Promise<Object> {
   // dunesUtxosMappable via unspents method
   const unspents = wallet.utxos;
-  const duneOutputMap = new Map<string, DuneBalance>();
-  for (let i = 0; i < unspents.length; i++) {
-    const utxo = unspents[i];
-    if (utxo.dunes && utxo.dunes.length > 0) {
-      for (const dune of utxo.dunes) {
-        // todo, optimize downstream code to not rely on this...
-        const duneInfo = await fetchDuneInfo(dune.dune_id);
-        if (duneInfo === null) {
-          throw new Error('Could not fetch dune info');
-        }
-        duneOutputMap.set(utxo.txid, {
-          txid: utxo.txid,
-          vout: utxo.vout,
-          balance: Number(utxo.dunes[0].amount) * 10 ** duneInfo.divisibility,
-          dune: duneInfo.name,
-        });
-      }
+  const unspentsWithDunes = unspents.filter((utxo) => {
+    return utxo.dunes && utxo.dunes.length > 0;
+  });
+
+  const duneOutputs: {[key: string]: DuneBalance} = {};
+  const dunes = unspentsWithDunes.map((utxo) => {
+    return utxo.dunes.map((dune) => {
+      return { utxo, dune };
+    });
+  }).flat();
+  const withDuneInfo = await Promise.all(dunes.map(async (dune) => {
+    const duneInfo = await fetchDuneInfo(dune.dune.dune_id);
+    if (duneInfo === null) {
+      throw new Error('Could not fetch dune info');
     }
-  }
-  return duneOutputMap;
+    return {
+      ...dune,
+      duneInfo,
+    };
+  }));
+  withDuneInfo.forEach((dune) => {
+    duneOutputs[`${dune.utxo.txid}:${dune.utxo.vout}`] = {
+      txid: dune.utxo.txid,
+      vout: dune.utxo.vout,
+      balance: Number(dune.utxo.dunes[0].amount) * 10 ** dune.duneInfo.divisibility,
+      dune: dune.duneInfo.name,
+    };
+  });
+
+  return duneOutputs
 }
