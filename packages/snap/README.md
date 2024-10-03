@@ -1,6 +1,6 @@
-# Dogecoin Snap 🐶
+# DoggyFi Snap
 
-This Dogecoin snap was built as a tutorial on how to create a non-EVM chain with [MetaMask Snaps](https://docs.metamask.io/snaps/). For the full information and tutorial, consult the [root README](../../README.md).
+For the full information and tutorial, consult the [root README](../../README.md).
 
 ## Features
 
@@ -9,7 +9,16 @@ The snap has the following features:
 - Generate a single Dogecoin address
 - Get the balance for that address
 - Get the list of transactions for that address
-- Send DOGETEST from that address to another address
+- Send DOGE from that address to another address
+- Send DRC-20 from that address to another address
+- Send Dunes from that address to another address
+- Mint DRC-20 tokens
+- Mint transfer inscriptions for DRC-20 tokens
+- Deploy DRC-20 tokens
+- Send Doginals
+- Inscribe Doginals
+- Open Dunes
+
 
 ## Permissions
 
@@ -22,7 +31,7 @@ The snap requires the following [permissions](https://docs.metamask.io/snaps/ref
 
 ## RPC API
 
-The snap exposes the following [RPC API](./src/rpc.ts):
+The snap exposes the following from [RPC API](./src/rpc.ts):
 
 - `doge_getAddress` - returns the single address of the wallet
 - `doge_getTransactions` - returns a list of transactions for the address
@@ -33,3 +42,15 @@ The snap exposes the following [RPC API](./src/rpc.ts):
 - `doge_sendDrc20` - sends a transfer inscription for a drc-20 token
 - `doge_deployDrc20` - mints a deploy inscription for a drc-20 token
 - `doge_sendDoginal` - accepts a utxo and vout for a doingal and spends it to a specified address
+- `doge_signPsbt` - accepts a psbt and signs it with the specified private key
+- `doge_pushPsbt` - accepts a psbt and broadcasts it to the network
+- `doge_signMessage` - accepts a message and signs it with the specified private key
+- `doge_verifyMessage` - accepts a message and a signature and verifies the signature
+- `doge_sendDune` - sends a dune to a specified address
+- `doge_openDune` - deploys an open dune transaction
+- `doge_mintDune` - mints a dune
+- `doge_splitDune` - splits a dune
+- `doge_getDuneBalancesForAccount` - retrieves the dune balances for an account
+- `doge_getDuneMetadata` - retrieves the dune metadata for a dune
+- `doge_getDrc20Balance` - retrieves the drc20 balance for an address
+- `doge_inscribeData` - inscribes data onto the dogecoin blockchain
