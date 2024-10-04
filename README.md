@@ -9,6 +9,9 @@ Let's get started! 🎢🚀
 ## Audit
 DoggyFi's snap has been throughly audited for potential attack vectors by Sayfer, you can read the audit report [here](https://sayfer.io/audits/metamask-snap-audit-report-for-doggyfi/).
 
+## Video Preview
+Per metamask's request, we have also created a video preview of the snap which you can view [here](https://drive.google.com/file/d/1hyvmK4hJn5BWKXRfy5OfIiJx9GeSQg3m/view?usp=sharing).
+
 ## Pre-work
 
 If this is your first time developing with Snaps, take a look at the [Snaps introduction](https://docs.metamask.io/snaps/) and [Snaps Getting Started Guide](https://docs.metamask.io/snaps/category/get-started/) before diving into this tutorial.
