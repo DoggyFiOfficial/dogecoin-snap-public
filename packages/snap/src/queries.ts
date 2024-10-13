@@ -1,7 +1,37 @@
-import { env } from '../fakeEnv';
+import { pushTransaction } from './doggyfi-apis/pushTransaction';
+import { fetchTxInfo } from './doggyfi-apis/getTxInfo';
+import { fetchBlockCount } from './doggyfi-apis/blockcount';
+import { TxInfoResponse } from './doggyfi-apis/interfaces';
+interface UTXO {
+  txid: string;
+  vout: number;
+  address: string;
+  script_pubkey: string;
+  satoshis: string;
+  confirmations: number;
+  height: number;
+  dune_amount: string;
+}
 
-const RPC_URL = String(env.GATSBY_RPC_URL);
-const RPC_AUTH = String(env.GATSBY_API_KEY); // Note, this is only for testing purposes. In production, we will make available a globally rate limited API without a key.
+interface LastUpdated {
+  block_hash: string;
+  block_height: number;
+}
+
+export interface UTXOResponse {
+  utxos: UTXO[];
+  lastUpdated: LastUpdated;
+  nextCursor: string;
+}
+
+/**
+ * Method to get the block count from the RPC.
+ *
+ * @returns A promise of the block count.
+ */
+export async function getBlockCount(): Promise<number | null> {
+  return await fetchBlockCount();
+}
 
 // TODO: can we pass multiple hashes to pull everything in one go?
 /**
@@ -10,32 +40,15 @@ const RPC_AUTH = String(env.GATSBY_API_KEY); // Note, this is only for testing p
  * @param hash - The transaction hash.
  * @returns A promise of the transaction details.
  */
-export async function getRpcTxDtails(hash: string): Promise<RPCTransaction> {
-  const rpcurl = RPC_URL;
-  const headers = {
-    'Content-Type': 'application/json',
-    Authorization: `Basic ${RPC_AUTH}`,
-  };
-  try {
-    // use fetch instead of axios
-    const resp = (await fetch(rpcurl, {
-      headers,
-      method: 'POST',
-      body: JSON.stringify({
-        jsonrpc: '1.0',
-        id: 'doggyfi',
-        method: 'getrawtransaction',
-        params: [hash, true],
-      }),
-    }).then((r) => r.json())) as RPCTransactionDetails;
+export async function getRpcTxDtails(hash: string): Promise<TxInfoResponse> {
+  const res = await fetchTxInfo(hash);
 
-    // return json result
-    console.log('getRpcTxDtails response: ', resp);
-    return resp.result;
-  } catch (err) {
-    console.error(err);
-    throw new Error(`Error fetching transaction details ${err}`);
+  // check if res is null
+  if (res === null) {
+    throw new Error('Error fetching transaction details');
   }
+
+  return res;
 }
 
 export type RpcUnspentOutput = {
@@ -91,30 +104,8 @@ export type RPCTransaction = {
   blocktime: number;
 };
 
-export const sendRawTransaction = async (txHex: string): Promise<any> => {
-  const rpcuser = 'dogecoin';
-  const rpcpassword = env.RPC_PASS;
-  const rpcurl = env.RPC_URL;
-
-  const resp = await fetch(rpcurl, {
-    headers: {
-      'Content-Type': 'text/plain',
-      Authorization: `Basic ${btoa(`${rpcuser}:${rpcpassword}`)}`,
-    },
-    method: 'POST',
-    body: JSON.stringify({
-      jsonrpc: '1.0',
-      id: 'doggyfi',
-      method: 'sendrawtransaction',
-      params: [txHex],
-    }),
-  }); // .then(r => r.json()) as { result: string }
-
-  if (!resp.body) {
-    throw new Error(await resp.text());
-  }
-
-  return resp; // resp.result as string
+export const sendRawTransaction = async (txHex: string): Promise<string> => {
+  return (await pushTransaction(txHex))?.txid ?? '';
 };
 
 type ScriptSig = {

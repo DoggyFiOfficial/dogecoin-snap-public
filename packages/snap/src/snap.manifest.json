@@ -1,34 +1,36 @@
 {
-    "version": "0.1.0",
-    "description": "A snap to manage Dogecoin + Doginal assets",
-    "proposedName": "Dogecoin Snap",
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/MetaMask/template-snap-monorepo.git"
-    },
-    "source": {
-      "shasum": "5sPu+mYUcFVAVTKWV+aNYkn3x5VU3xIa6PBXSkDqg+k=",
-      "location": {
-        "npm": {
-          "filePath": "dist/bundle.js",
-          "iconPath": "images/icon.svg",
-          "packageName": "@doggyfiofficial/dogecoin-snap",
-          "registry": "https://registry.npmjs.org/"
-        }
+  "version": "0.1.0",
+  "description": "A snap to manage Dogecoin + Doginal assets",
+  "proposedName": "Kabosu",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
+  },
+  "source": {
+    "shasum": "5sPu+mYUcFVAVTKWV+aNYkn3x5VU3xIa6PBXSkDqg+k=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "images/icon.svg",
+        "packageName": "@doggyfiofficial/dogecoin-snap",
+        "registry": "https://registry.npmjs.org/"
       }
+    }
+  },
+  "initialPermissions": {
+    "snap_dialog": {},
+    "endowment:rpc": {
+      "dapps": true,
+      "snaps": false
     },
-    "initialPermissions": {
-      "snap_dialog": {},
-      "endowment:rpc": {
-        "dapps": true,
-        "snaps": false
-      },
-      "endowment:network-access": {},
-      "snap_getBip44Entropy": [
-        {
-          "coinType": 3
-        }
-      ]
+    "endowment:network-access": {
+      "allowedUrls": ["<all_urls>"]
     },
-    "manifestVersion": "0.1"
-  }
+    "snap_getBip44Entropy": [
+      {
+        "coinType": 3
+      }
+    ]
+  },
+  "manifestVersion": "0.1"
+}

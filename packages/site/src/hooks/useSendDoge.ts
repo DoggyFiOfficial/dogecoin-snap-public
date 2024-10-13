@@ -21,7 +21,7 @@ export const useSendDoge = () => {
 
       if (typeof toAddress === 'string' && typeof amountInDoge === 'string') {
         const response = await makeTransaction({
-          addressIndex : Number(addressIndex),
+          addressIndex: Number(addressIndex),
           toAddress: String(toAddress),
           amountInDoge: Number(amountInDoge),
         });

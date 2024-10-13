@@ -1,12 +1,13 @@
 // Flat file refactoring doginals.js in typescript
-import { getDogeOrdUnspents as getUTXOs } from '../dogeord/dogeordUnspents';
+import { fetchUTXOs } from '../doggyfi-apis/unspents';
 import {
   makeMintInscription,
   makeTransferInscription,
   makeDeployInscription,
 } from './inscribeMethods';
 import { inscribe } from './inscribe';
-import { createWallet, UTXO, Wallet } from './makeApezordWallet';
+import { createWallet, Wallet, APEUTXO } from './makeApezordWallet';
+import { UTXO } from '../doggyfi-apis/interfaces';
 
 const VALID_CONTENT_TYPES = ['text/plain;charset=utf-8', 'image/jpeg'];
 const DRC20_CONTENT_TYPE = 'text/plain;charset=utf-8';
@@ -19,33 +20,64 @@ const DRC20_CONTENT_TYPE = 'text/plain;charset=utf-8';
  * @param filterDust - Whether to filter dust.
  * @returns Wallet matching apezord schema.
  */
-async function makeWalletFromDogeOrd(
+export async function makeWalletFromDogeOrd(
   privkey: string,
   address: string,
   filterDust = true,
 ): Promise<Wallet> {
-  const dogeordunspents = await getUTXOs(address);
+  const resp = await fetchUTXOs(address);
+  if (resp === null) {
+    throw new Error('Could not fetch utxos');
+  }
+  const unspents: UTXO[] = resp.unspents;
 
   // remap dogeord unspent outputs to UTXOs from makeApezordWallet
-  const utxos: UTXO[] = [];
-  for (const dogeordunspent of dogeordunspents) {
-    const _value = Number(dogeordunspent.value);
+  const apeutxos: APEUTXO[] = [];
+  for (const unspent of unspents) {
+    const _value = Number(unspent.value);
     if (filterDust && _value <= 100_000) {
       continue; // risk of being an inscription
     }
-    const _txid = dogeordunspent.tx_hash;
-    const _vout = Number(dogeordunspent.tx_output_n);
-    const _script = dogeordunspent.script;
-    utxos.push({
+    const _txid = unspent.hash;
+    const _vout = Number(unspent.vout_index);
+    apeutxos.push({
       txid: _txid,
       vout: _vout,
       satoshis: _value,
-      script: _script,
+      dunes: unspent.dunes,
+      inscriptions: unspent.inscriptions,
+      script: unspent.scriptPubKey,
     });
   }
 
   // make an apzord wallet
-  return createWallet(privkey, address, utxos);
+  return createWallet(privkey, address, apeutxos);
+}
+
+/**
+ * Inscribe data
+ *
+ * @param privateKey - The private key.
+ * @param address - The doge address.
+ * @param data - The data to inscribe.
+ */
+export async function inscribeData(
+  privateKey: string,
+  address: string,
+  data: string,
+  doggyfiFee: number,
+  doggyfiAddress: string,
+): Promise<[string[], number]> {
+  // check contentType is valid
+  if (!VALID_CONTENT_TYPES.includes(DRC20_CONTENT_TYPE)) {
+    throw new Error('invalid content type');
+  }
+
+  const dataBuffer = Buffer.from(data, 'utf-8');
+  const wallet = await makeWalletFromDogeOrd(privateKey, address);
+  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, dataBuffer, doggyfiFee, doggyfiAddress);
+
+  return [res.serialized, res.totalFees];
 }
 
 /**
@@ -55,6 +87,8 @@ async function makeWalletFromDogeOrd(
  * @param address - The doge address.
  * @param ticker - A drc20 ticker.
  * @param amount - The amount to mint.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
  * @returns A promise of a tuple of the serialized transaction and the total fees.
  */
 export async function mintDrc20(
@@ -62,6 +96,8 @@ export async function mintDrc20(
   address: string,
   ticker: string,
   amount: number,
+  doggyfiFee: number,
+  doggyfiAddress: string,
 ): Promise<[string[], number]> {
   // check if ticker is 4 characters...
   if (ticker.length !== 4) {
@@ -83,7 +119,7 @@ export async function mintDrc20(
 
   // make an apzord wallet
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
-  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data);
+  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
 
   return [res.serialized, res.totalFees];
 }
@@ -95,6 +131,8 @@ export async function mintDrc20(
  * @param fromAddress - The doge address.
  * @param ticker - A drc20 ticker.
  * @param amount - The amount to transfer.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
  * @returns A promise of a tuple of the serialized transaction and the total fees.
  */
 export async function transferDrc20(
@@ -102,6 +140,8 @@ export async function transferDrc20(
   fromAddress: string,
   ticker: string,
   amount: number,
+  doggyfiFee: number,
+  doggyfiAddress: string,
 ): Promise<[string[], number]> {
   // check if ticker is 4 characters...
   if (ticker.length !== 4) {
@@ -122,7 +162,7 @@ export async function transferDrc20(
   const data = Buffer.from(argHexData, 'hex');
 
   const wallet = await makeWalletFromDogeOrd(privateKey, fromAddress);
-  const res = inscribe(wallet, fromAddress, DRC20_CONTENT_TYPE, data);
+  const res = inscribe(wallet, fromAddress, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
 
   return [res.serialized, res.totalFees];
 }
@@ -145,6 +185,8 @@ export async function mintDeploy(
   max: number,
   lim: number | null | undefined,
   dec: number | null | undefined,
+  doggyfiFee: number,
+  doggyfiAddress: string,
 ): Promise<[string[], number]> {
   // make sure contentType is valid
   if (!VALID_CONTENT_TYPES.includes(DRC20_CONTENT_TYPE)) {
@@ -191,7 +233,7 @@ export async function mintDeploy(
   }
 
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
-  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data);
+  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
 
   return [res.serialized, res.totalFees];
 }

@@ -79,10 +79,10 @@ const snapRpcRequest = async <M extends keyof RpcMethodTypes>(
 
 /**
  * Invoke the "doge_getAddress" RPC method from the snap.
- * 
+ *
  * @params - The address parameters.
  */
-export const getAddress = async (addressIndex : number) => {
+export const getAddress = async (addressIndex: number) => {
   return snapRpcRequest({
     snapRpcMethod: 'getAddress',
     params: {
@@ -94,7 +94,7 @@ export const getAddress = async (addressIndex : number) => {
 /**
  * Invoke the "doge_getBalance" RPC method from the snap.
  */
-export const getBalance = async (addressIndex : number) => {
+export const getBalance = async (addressIndex: number) => {
   return snapRpcRequest({
     snapRpcMethod: 'getBalance',
     params: {
@@ -287,6 +287,182 @@ export const deployDrc20 = async ({
       maxSupply,
       lim,
       decimals,
+    },
+  });
+};
+
+/** method to send a Dune
+ *
+ * @param params - The transaction parameters.
+ * @param params.addressIndex - The address index.
+ * @param params.dune - The dune to send.
+ * @returns The transaction hash.
+ */
+export const sendDune = async ({
+  addressIndex,
+  toAddress,
+  amount,
+  dune,
+}: {
+  addressIndex: number;
+  toAddress: string;
+  amount: number;
+  dune: string;
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'sendDune',
+    params: {
+      addressIndex,
+      toAddress,
+      amount,
+      dune,
+    },
+  });
+};
+
+/**
+ * Invoke the "doge_openDune" RPC method from the snap.
+ *
+ * @param params - The transaction parameters.
+ * @param params.addressIndex - The address index.
+ * @param params.toAddress - The address to send the dune to.
+ * @param params.limit - The limit of the dune.
+ * @param params.divisibility - The divisibility of the dune.
+ * @param params.cap - The cap of the dune.
+ * @param params.heightStart - The start height of the dune.
+ * @param params.heightEnd - The end height of the dune.
+ * @param params.offsetStart - The start offset of the dune.
+ * @param params.offsetEnd - The end offset of the dune.
+ * @param params.premine - The premine of the dune.
+ * @param params.turbo - The turbo of the dune.
+ * @param params.openMint - The open mint of the dune.
+ * @returns The transaction hash.
+ */
+export const openDune = async ({
+  addressIndex,
+  toAddress,
+  tick,
+  symbol,
+  limit,
+  divisibility,
+  cap,
+  heightStart,
+  heightEnd,
+  offsetStart,
+  offsetEnd,
+  premine,
+  turbo,
+  openMint,
+}: {
+  addressIndex: number;
+  toAddress: string;
+  tick: string;
+  symbol: string;
+  limit: string | null;
+  divisibility: number;
+  cap: string | null;
+  heightStart: number | null;
+  heightEnd: number | null;
+  offsetStart: number | null;
+  offsetEnd: number | null;
+  premine: string;
+  turbo: boolean;
+  openMint: boolean;
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'openDune',
+    params: {
+      addressIndex,
+      toAddress,
+      tick,
+      symbol,
+      limit,
+      divisibility,
+      cap,
+      heightStart,
+      heightEnd,
+      offsetStart,
+      offsetEnd,
+      premine,
+      turbo,
+      openMint,
+    },
+  });
+};
+
+/**
+ * Invoke the "doge_mintDune" RPC method from the snap.
+ *
+ * @param params - The transaction parameters.
+ * @param params.toAddress - The address to send the dune to.
+ * @param params.id - The id of the dune.
+ * @param params.amount - The amount of the dune.
+ * @param params.receiver - The receiver of the dune.
+ * @returns The transaction hash.
+ */
+export const mintDune = async ({
+  addressIndex,
+  toAddress,
+  id,
+  amount,
+  receiver,
+}: {
+  addressIndex: number;
+  toAddress: string;
+  id: string;
+  amount: string;
+  receiver: string;
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'mintDune',
+    params: {
+      addressIndex,
+      toAddress,
+      id,
+      amount,
+      receiver,
+    },
+  });
+};
+
+/**
+ * Invoke the "doge_splitDune" RPC method from the snap.
+ *
+ * @param params - The transaction parameters.
+ * @param params.addressIndex - The address index.
+ * @param params.txhash - The transaction hash.
+ * @param params.vout - The vout of the transaction.
+ * @param params.decimals - The decimals of the dune.
+ * @param params.amounts - The amounts of the dune.
+ * @param params.addresses - The addresses of the dune.
+ */
+export const splitDune = async ({
+  addressIndex,
+  txhash,
+  vout,
+  dune,
+  decimals,
+  amounts,
+  addresses,
+}: {
+  addressIndex: number;
+  txhash: string;
+  vout: number;
+  dune: string;
+  decimals: number;
+  amounts: string[];
+  addresses: string[];
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'splitDune',
+    params: {
+      addressIndex,
+      txhash,
+      vout,
+      dune,
+      decimals,
+      amounts,
+      addresses,
     },
   });
 };

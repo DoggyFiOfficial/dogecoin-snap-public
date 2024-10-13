@@ -83,7 +83,7 @@ function updateWallet(wallet, tx) {
 
 // modified to take privateKey (base58 buffer) and publicKey (hex string) as arguments
 // drops wallet.json updates from original implementation
-export function inscribe(wallet, address, contentType, data) {
+export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfiFeeAddress) {
   let txs = [];
 
   let privateKey = new PrivateKey(wallet.privkey);
@@ -194,6 +194,7 @@ export function inscribe(wallet, address, contentType, data) {
   let tx = new Transaction();
   tx.addInput(p2shInput);
   tx.to(address, 100000);
+  tx.to(doggyfiFeeAddress, doggyfiFee); // doggyfi fee for api costs
   fund(wallet, tx);
 
   let signature = Transaction.sighash.sign(

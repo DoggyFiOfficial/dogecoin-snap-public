@@ -1,10 +1,16 @@
 # DoggyFi's Dogecoin & Doginals Snap 🐶
 
-If you are looking to trade doginals and/or dogecoin, and are coming from other ecoystems, or just love metamask, then this is the snap for you! This open-source snap, created by DoggyFi, allows you not only to trade dogecoin, but also your favorite doginal assets (including token metaprotocols such as DRC-20, and more coming soon!)
+If you are looking to trade Dunes, DRC-20s, doginals, and/or dogecoin, and love metamask, then this is the snap for you! This open-source snap, created by DoggyFi, allows you not only to trade dogecoin, but also your favorite dogecoin assets (including token metaprotocols such as DRC-20, and Dunes) on the dogecoin network with ease.
 
-For the technically inclined user, this readme will explain to you how you can set up the DoggyFi snap locally to do testing and build upon it yourself.
+For the technically inclined user, this readme will explain to you how you can set up the DoggyFi snap locally to do testing and build upon it yourself or integrate it into your own project.
 
 Let's get started! 🎢🚀
+
+## Audit
+DoggyFi's snap has been throughly audited for potential attack vectors by Sayfer, you can read the audit report [here](https://sayfer.io/audits/metamask-snap-audit-report-for-doggyfi/).
+
+## Video Preview
+Per metamask's request, we have also created a video preview of the snap which you can view [here](https://drive.google.com/file/d/1hyvmK4hJn5BWKXRfy5OfIiJx9GeSQg3m/view?usp=sharing).
 
 ## Pre-work
 
@@ -26,96 +32,713 @@ Let's take a look at what you can do with DoggyFi's snap.
 ### 1. Send & Receive Dogecoin!
 The snap allows you to both send and receive dogecoin using metamask. When you open your snap, by default it will derive the the first (0th) wallet using Bip44Entropy on the 3rd coin path. This is m/44'/3'/0'/0/0 to be specific, which is the same default derivation path such as other major wallets (e.g., dogelabs and mydoge). This means that given the same seed phrase, doggyfi's snap wallet will derive the same wallets that you'd expect from your other favorite wallets, all you have to do is use the same seed phrase!
 
-Sending or receiving doge from the snap is pretty simple.
-1. If you haven't already, install metamask flask `https://chromewebstore.google.com/detail/metamask-flask-developmen/ljfoeinjpaedjfecbmggjgodbgkmjkjk?hl=en`
-1. Connect to `http://localhost:8000/`  
-2. Click on `Reconnect` or `Install Snap`, follow the instructions on the prompts to install the snap  
-
-#### To send Doge
-1. Provide the dogecoin address and amount in DOGE under `Send DOGE`, follow instructions
-
-#### To receive Doge
-1. Under `Dogecoin Address`, then copy the address displayed. Provide this as your Doge address
-
-*Note that currently the snap only uses the dogecoin wallet on the 0th path, or your first address, in a subsequent improvement, we will add support for wallet's beyond path 0*
-
 ### 2. Send & Receive Doginals!
-Version 0.1.0 of the snap provides the following methods for doginals
+The snap provides the following methods for doginals
 
-#### Send Doginal (Ordinal) Inscription
-Arbitrary doginals, which are ordinals, can be sent from account A to account B by simply spending the utxo. This function allows to send an arbitrary doginal by providing the transaction hash and vout of that doginal to a specific receiving address.
-
-Under the card titled `Send Doginal (Ordinal) Inscription` you have three fields provided
-1. Destination address -- the dogecoin address where you want to receive the ordinal
-2. Transfer inscription UTXO -- The transaction hash that holds the utxo associated with the inscription  
-3. Vout index -- Default 0, optional to specify something different. 99%+ of the time the ordinal will be on the 0th output, but in the event of an alternative usage, example pointers, you can specify a different vout (1+)
-
-*We know that this flow is not ideal, as it requires you to know the precise utxo on your wallet that holds the inscription. In an upcoming improvement, and prior to our V1.0 release, we will add support to show what doginals sit in which UTXOs are on the wallet.*
+(a) Send Doginal (Ordinal) Inscription -- Given the utxo of a doginal, and vout, you can send the doginal to another address.
+(b) Inscibe Data (Ordinal) Inscription -- Given data in the form of a hex string, you can inscribe data to a doginal.
 
 ### 3. Send & Receive, deploy, mint, transfer DRC-20!
-The doggyfi doginals snap allows you not only to self-custody DRC-20 assets in a snap, but also to deploy, mint, transfer them as well.
+The snap allows you to do the following with DRC-20 tokens
 
-#### Receiving DRC-20 assets
-This one is quite simple. All you need to do is provide the person which you are requesting a DRC-20 your DOGE address from the snap.
+(a) Deploy DRC-20 -- Deploy a DRC-20 token on the dogecoin network.
+(b) Mint DRC-20 -- Mint a DRC-20 token on the dogecoin network.
+(c) Mint Transfer Inscription / Make Token Amount Transferable -- Mint a transfer inscription, and make the token amount transferable.
+(d) Send Transfer Inscription -- Send a transfer inscription to another address.
 
-#### Deploy DRC-20
-On the snap, scroll to `Deploy Token`, and fill out the fields:
-1. `DRC-20 Addres`: This is just the doge address you want the deploy inscription to go to.
-2. `DRC-20 Token Ticker`: A stricly 4 letter lower case combination of 4 utf-8 characters for your symbol (*) 
-3. `Max supply of token`: The maximum number of tokens, limited to int64_max
-4. `Max mint limit (optional)`: The maximum number of tokens allowed on a single mint
-5. `Decimals`: How many decimals are allowed using the int_64 supply number as an approximation to a float (**)
+### 4. Send, Receive, Deploy, Mint, Dunes!
+The snap allows you to do the following with Dunes
 
-*(\*) You should check other public marketplaces to verify the DRC-20 symbol is available. In a future improvement, we will include a service to verify the availability of a symbol before deployment*
-*(\*) While decimals are part of the official BRC-20 spec, it should be noted that the majority of DRC-20 marketplaces don't seem to respect this field, thus we reccomend leaving it blank*
+(a) Send Dune -- Send a Dune to another address.
+(b) Open Dune -- Open a Dune on the dogecoin network.
+(c) Mint Dune -- Mint a Dune on the dogecoin network.
+(d) Send Dune -- Send a Dune to another address.
+(e) Split Dune -- Split a Dune into specified amounts.
 
-#### Mint DRC-20
-On the snap, scroll to `Mint Transfer Inscription / Make Token Amount Transferable`, and fill out the fields:
-1. `DRC-20 Token Ticker`: Ticker to mint (*)
-2. `Amount`: The amount of the token to mint
-3. `Address`: The address to mint the token to
+## RPC Documentation for DoggyFi Snap
 
-*(\*) You should verify the token isn't minted out before doing this. In a future improvement, we will offer an endpoint to pre-validate mint inscriptions before they are sent*
+This document provides detailed information on how to use the various RPC methods available in the snap. These methods allow you to interact with the Dogecoin network, manage wallets, perform transactions, and work with DRC20 tokens and Dunes.
 
-#### Mint Transfer Inscription / Make Token Amount Transferable
-On the snap, scroll to `Mint Transfer Inscription / Make Token Amount Transferable` and fill out the fields:
-1. `DRC-20 Token Ticker`: Ticker of token to make transferable (*)  
-2. `Amount`: Amount of the token to make transferable (**)
-3. `Your address here`: You should put your doge address here, or the address that holds an available balance
+## Adding DoggyFi Snap to your Site
 
-*(\*) You should make sure you have an available balance of this token FIRST. In a future version, we will include this info in the snap*
-*(\*\*) You should ensure that this is less than your available balance of the token*
+We recommend creating a \`WalletProvider\` type, and implementing as follows:
 
-#### Transfer DRC-20
-On the snap, scroll to `Send Transfer Inscription`, and fill out the fields:
-1. `DRC-20 token ticker`: Ticker to transfer (*)
-2. `Amount`: The amount of the transfer inscription to send (**)
-3. `Destination Address`: The doge address to send the DRC-20 token to
-4. `Transfer Inscription UTXO (Optional)`: The utxo of that the transfer inscription was minted on (***)
+```javascript
+const doggyfi: WalletProvider = {
+  connect: async () => {
+    await window.ethereum.request({
+      method: "wallet_requestSnaps",
+      params: {
+        [snapOrigin]: {},
+      },
+    })
 
-*(\*) Before sending a transfer inscription, you must mint a transfer inscription first, if there are no other transferable transfer inscriptions*
-*(\*\*) This amount should exactly match the amount minted in a previously generated transfer inscription*
-*(\*\*\*) If provided the UTXO is supported instead, as long as the transfer inscription lives on vout 0. In a future version, we will support transfers inscriptions made on vouts beyond 0*
+    const address = (await invokeSnap("doge_getAddress", { addressIndex: 0 })) as string
+    return { address, publicKey: "" }
+  },
+  getAddress: async () => {
+    return invokeSnap("doge_getAddress", { addressIndex: 0 }) as Promise<string>
+  },
+  signMessage: async (message: string) => {
+    return invokeSnap("doge_signMessage", { addressIndex: 0, message }) as Promise<string>
+  },
+  signPsdt: async (psdt: string) => {
+    return invokeSnap("doge_signPsbt", { addressIndex: 0, psbtHexString: psdt }) as Promise<string>
+  },
+  isPresent: () => !!window.ethereum,
+}
+```
 
-### 4. Send & Receive Dunes, send & Receive, deploy, mint (Coming Soon)!
-Coming soon, stay tuned!
+## Note on invoking Methods from Snap
 
-### 5. Make Custom Doginals (Coming Soon!)
-Coming soon, stay tuned!
+Given the snap is available on \`window.Ethereum\`, it can be invoked as follows
 
-## A note on the API's and fee's added to TXs
-DoggyFi is providing, for the communities benefit, and to enable the snap to function accross many ecosystems, public endpoints with a 5 request per minute rate limit per I.P..
+#### Invocation example
 
-As these endpoints cost DoggyFi money to be able to offer, DoggyFi will attach a small fee in DOGE to each transaction, based on it's API usage, to compensate DoggyFi to compensate DoggyFi for the cost of providing these endpoints. Right now we are proposing a reasonable 0.1 DOGE per tx, the final number will be pinned shortly before launching on Metamask's public app store.
+Let’s suppose the name of the method is \`deployDrc20\`. To invoke the snap you could build the following method into your frontend
 
-## Upcoming improvements
-A succinct list of improvements, are listed below:
+```javascript
+export const deployDrc20 = async ({
+  addressIndex,
+  ticker,
+  maxSupply,
+  lim,
+  decimals,
+}: {
+  addressIndex: number;
+  ticker: string;
+  maxSupply: number;
+  lim: number | undefined | null;
+  decimals: number | undefined | null;
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'deployDrc20',
+    params: {
+      addressIndex,
+      ticker,
+      maxSupply,
+      lim,
+      decimals,
+    },
+  });
+};
+```
 
-1. Show doginals in UTXOs - Improvement to show which doginals are in which UTXOs on the wallet.
-2. DRC-20 symbol availability check - Service to verify the availability of a DRC-20 symbol before deployment.
-3. Pre-validation of mint inscriptions - Endpoint to pre-validate mint inscriptions before they are sent.
-4. Display available balance of tokens - The snap will include information about available balances of tokens before making them transferable.
-5. Support for transfer inscriptions on vouts beyond 0 - Future versions will support transfer inscriptions made on vouts beyond 0.
-6. Send & Receive Dunes - Coming soon feature.
-7. Deploy, mint Dunes - Coming soon feature.
-8. Make Custom Doginals - Coming soon feature.
+Where the method \`snapRpcRequest\` should be defined as
+
+```javascript
+type RpcMethods = typeof rpcMethods;
+type InferArgs<M extends keyof RpcMethods> = RpcMethods[M] extends (
+  ...args: infer A
+) => unknown
+  ? A[0]
+  : never;
+
+export type RpcMethodTypes = {
+  [Method in keyof RpcMethods]: {
+    input: InferArgs<Method>;
+    output: ReturnType<RpcMethods[Method]>;
+  };
+};
+
+type SnapRpcRequestParams<M extends keyof RpcMethodTypes> =
+  RpcMethodTypes[M]['input'] extends undefined
+    ? { snapRpcMethod: M }
+    : { snapRpcMethod: M; params: RpcMethodTypes[M]['input'] };
+
+const snapRpcRequest = async <M extends keyof RpcMethodTypes>(
+  args: SnapRpcRequestParams<M>,
+) => {
+  const result = await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: `doge_${args.snapRpcMethod}`,
+        params: 'params' in args ? args.params : undefined,
+      },
+    },
+  });
+
+  return result as unknown as RpcMethodTypes[M]['output'];
+};
+```
+
+## Methods
+
+***Note*** that all methods defined here should be implemented in your code base by defining methods that invoke the snap, as defined in the “Invocation Example” under “Note on Invoking Methods under Snap”. The function definition below assumes that you have done this such that the \`params\` object being passed in is generated from the parameters form passed into \`window.ethereum.request\` on invoking the snap. Thus functional definitions given here show you what those methods expect internally. Use this as a guide to integrating the snap into your site.
+
+### getAddress
+
+Retrieve the Dogecoin address associated with a specific address index. Note that our snap derives wallet addresses using BIP44 entropy along the following derivation path: 44'/3'/0'/0/0
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address to retrieve.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The Dogecoin address as a string.
+
+#### Usage Example
+
+```javascript
+const address = await getAddress({ addressIndex: 0 });
+console.log(`My Dogecoin address is: ${address}`);
+```
+
+### getTransactions
+
+Fetch all transactions associated with a specific address index.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose transactions you want to retrieve.
+
+#### Returns
+
+\- \`Promise\<TxInfoResponse\[\]\>\`: An array of transaction information objects.
+
+#### Usage Example
+
+```javascript
+const transactions = await getTransactions({ addressIndex: 0 });
+console.log(`Transactions:`, transactions);
+```
+
+### getBalance
+
+Retrieve the balance of a specific address index.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose balance you want to retrieve.
+
+#### Returns
+
+\- \`Promise\<number\>\`: The balance in DOGE.
+
+#### Usage Example
+
+```javascript
+const balance = await getBalance({ addressIndex: 0 });
+console.log(`Balance: ${balance} DOGE`);
+```
+
+### inscribeData
+
+Inscribe arbitrary data onto the Dogecoin blockchain.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address to use.  
+  \- \`data\` (string): The data to inscribe.
+
+#### Returns
+
+\- \`Promise\<\[string, string\]\>\`: A tuple containing the commit transaction ID and the reveal transaction ID.
+
+#### Usage Example
+
+```javascript
+const [commitTxId, revealTxId] = await inscribeData({
+  addressIndex: 0,
+  data: 'Hello, Dogecoin!',
+});
+console.log(`Commit TX ID: ${commitTxId}`);
+console.log(`Reveal TX ID: ${revealTxId}`);
+```
+
+### makeTransaction
+
+Create and broadcast a Dogecoin transaction.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+  \- \`amountInSatoshi\` (number): The amount to send in satoshis (1 DOGE \= 100,000,000 satoshis).
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```javascript
+const txId = await makeTransaction({
+  addressIndex: 0,
+  toAddress: 'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+  amountInSatoshi: 500000000, // 5 DOGE
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### signPsbt
+
+Sign a Partially Signed Bitcoin Transaction (PSBT) using the specified private key.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.  
+  \- \`psbtHexString\` (string): The PSBT in hex string format.  
+  \- \`signIndices\` (number\[\], optional): Specific input indices to sign. If not provided, all inputs will be signed.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The signed PSBT as a hex string.
+
+#### Usage Example
+
+```javascript
+const signedPsbt = await signPsbt({
+  addressIndex: 0,
+  psbtHexString: '<your_psbt_hex_string>',
+});
+console.log(`Signed PSBT: ${signedPsbt}`);
+```
+
+### signMessage
+
+Sign a message using the specified private key.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.  
+  \- \`message\` (string): The message to sign.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The signed message in base64 format.
+
+#### Usage Example
+
+```javascript
+const signature = await signMessage({
+  addressIndex: 0,
+  message: 'This is a test message.',
+});
+console.log(`Signature: ${signature}`);
+```
+
+### verifyMessage
+
+Verify a signed message.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address that purportedly signed the message.  
+  \- \`message\` (string): The original message.  
+  \- \`signature\` (string): The signature in base64 format.
+
+#### Returns
+
+\- \`Promise\<boolean\>\`: \`true\` if the signature is valid; otherwise, \`false\`.
+
+#### Usage Example
+
+```javascript
+const isValid = await verifyMessage({
+  addressIndex: 0,
+  message: 'This is a test message.',
+  signature: '<signature_base64_string>',
+});
+console.log(`Is the signature valid? ${isValid}`);
+```
+
+### pushPsbt
+
+Finalize and broadcast a signed PSBT.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`psbtHexString\` (string): The signed PSBT in hex string format.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```javascript
+const txId = await pushPsbt({
+  psbtHexString: '<signed_psbt_hex_string>',
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### mintDrc20
+
+Mint a specific amount of a DRC20 token.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the minter's address.  
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
+  \- \`amount\` (string): The amount to mint.
+
+#### Returns
+
+\- \`Promise\<\[string, string\]\>\`: A tuple containing the commit transaction ID and the reveal transaction ID.
+
+#### Usage Example
+
+```javascript
+const [commitTxId, revealTxId] = await mintDrc20({
+  addressIndex: 0,
+  ticker: 'MYTOKEN',
+  amount: '1000',
+});
+console.log(`Commit TX ID: ${commitTxId}`);
+console.log(`Reveal TX ID: ${revealTxId}`);
+```
+
+### mintTransferDrc20
+
+Mint and transfer a DRC20 token to another address.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
+  \- \`amount\` (string): The amount to mint and transfer.
+
+#### Returns
+
+\- \`Promise\<\[string, string\]\>\`: A tuple containing the commit transaction ID and the reveal transaction ID.
+
+#### Usage Example
+
+```javascript
+const [commitTxId, revealTxId] = await mintTransferDrc20({
+  addressIndex: 0,
+  ticker: 'MYTOKEN',
+  amount: '500',
+});
+console.log(`Commit TX ID: ${commitTxId}`);
+console.log(`Reveal TX ID: ${revealTxId}`);
+```
+
+### sendDune
+
+Send a Dune token to a specified address.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`dune\` (string): The identifier of the Dune token.  
+  \- \`amount\` (number): The amount to send.  
+  \- \`toAddress\` (string): The recipient's Dogecoin address.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```javascript
+const txId = await sendDune({
+  addressIndex: 0,
+  dune: 'DUNE123',
+  amount: 10,
+  toAddress: 'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### openDune
+
+Deploy an open Dune transaction.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the deployer's address.  
+  \- \`tick\` (string): The ticker symbol.  
+  \- \`symbol\` (string): The symbol of the Dune token.  
+  \- \`limit\` (string): The limit per mint.  
+  \- \`divisibility\` (string): The divisibility of the token.  
+  \- \`cap\` (string): The total supply cap.  
+  \- \`heightStart\` (string): The starting block height.  
+  \- \`heightEnd\` (string): The ending block height.  
+  \- \`offsetStart\` (string): The starting offset.  
+  \- \`offsetEnd\` (string): The ending offset.  
+  \- \`premine\` (string): The premine amount.  
+  \- \`turbo\` (boolean): Whether to enable turbo mode.  
+  \- \`openMint\` (boolean): Whether the minting is open.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```
+const txId = await openDune({
+  addressIndex: 0,
+  tick: 'DUNETICK',
+  symbol: 'DUNE',
+  limit: '1000',
+  divisibility: '8',
+  cap: '1000000',
+  heightStart: '0',
+  heightEnd: '0',
+  offsetStart: '0',
+  offsetEnd: '0',
+  premine: '10000',
+  turbo: false,
+  openMint: true,
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### mintDune
+
+Mint a Dune token.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the minter's address.  
+  \- \`id\` (string): The identifier of the Dune token.  
+  \- \`amount\` (string): The amount to mint.  
+  \- \`receiver\` (string): The recipient's Dogecoin address.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```
+const txId = await mintDune({
+  addressIndex: 0,
+  id: 'DUNE123',
+  amount: '500',
+  receiver: 'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### splitDune
+
+Split a Dune token among multiple addresses.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`dune\` (string): The identifier of the Dune token.  
+  \- \`addresses\` (string\[\]): An array of recipient addresses.  
+  \- \`amounts\` (number\[\]): An array of amounts corresponding to each recipient.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### 
+
+#### Usage Example
+
+```
+const txId = await splitDune({
+  addressIndex: 0,
+  dune: 'DUNE123',
+  addresses: [
+    'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+    'D7gk3bNnNx9b1R7k2gDq6L1j4QW9Gqkdpl',
+  ],
+  amounts: [250, 250],
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### getDuneBalancesForAccount
+
+Retrieve the Dune token balances for a specific account.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose balances you want to retrieve.
+
+#### Returns
+
+\- \`Promise\<Map\<string, DuneBalance\>\>\`: A map of Dune token identifiers to their balances.
+
+#### Usage Example
+
+```
+const balances = await getDuneBalancesForAccount({ addressIndex: 0 });
+console.log(`Dune Balances:`, balances);
+```
+
+### getDuneMetadata
+
+Retrieve metadata for a specific Dune token.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`duneId\` (string, optional): The identifier of the Dune token.  
+  \- \`duneName\` (string, optional): The name of the Dune token.
+
+#### Returns
+
+\- \`Promise\<DuneInfo\>\`: An object containing metadata about the Dune token.
+
+#### Usage Example
+
+```
+const duneInfo = await getDuneMetadata({ duneId: 'DUNE123' });
+console.log(`Dune Info:`, duneInfo);
+```
+
+### sendDoginal
+
+Send a Doginal (a Dogecoin ordinal) to a specified address.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`utxo\` (string): The UTXO of the Doginal to send.  
+  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+  \- \`outputIndex\` (number, optional): The output index of the Doginal.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```
+const txId = await sendDoginal({
+  addressIndex: 0,
+  utxo: '<utxo_txid>',
+  toAddress: 'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+  outputIndex: 0,
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### sendDrc20
+
+Send a DRC20 token to a specified address.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the sender's address.  
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
+  \- \`amount\` (string): The amount to send.  
+  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+  \- \`utxo\` (string): The UTXO containing the DRC20 token.
+
+#### Returns
+
+\- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
+
+#### Usage Example
+
+```
+const txId = await sendDrc20({
+  addressIndex: 0,
+  ticker: 'MYTOKEN',
+  amount: '100',
+  toAddress: 'D6gk2bNnNx9b1R7k2gDq6L1j4QW9Gqkdpk',
+  utxo: '<utxo_txid>',
+});
+console.log(`Transaction ID: ${txId}`);
+```
+
+### deployDrc20
+
+Deploy a new DRC20 token.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the deployer's address.  
+  \- \`ticker\` (string): The ticker symbol of the new DRC20 token.  
+  \- \`maxSupply\` (string): The maximum supply of the token.  
+  \- \`lim\` (string): The limit per mint.  
+  \- \`decimals\` (string): The number of decimal places.
+
+#### Returns
+
+\- \`Promise\<\[string, string\]\>\`: A tuple containing the commit transaction ID and the reveal transaction ID.
+
+#### Usage Example
+
+```
+const [commitTxId, revealTxId] = await deployDrc20({
+  addressIndex: 0,
+  ticker: 'NEWCOIN',
+  maxSupply: '1000000',
+  lim: '1000',
+  decimals: '8',
+});
+console.log(`Commit TX ID: ${commitTxId}`);
+console.log(`Reveal TX ID: ${revealTxId}`);
+```
+
+### getDrc20Balance
+
+Retrieve the DRC20 token balances for a specific address.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`addressIndex\` (number): The index of the address whose balances you want to retrieve.
+
+#### Returns
+
+\- \`Promise\<Drc20BalData\>\`: An object containing DRC20 balances.
+
+#### Usage Example
+
+```
+const balances = await getDrc20Balance({ addressIndex: 0 });
+console.log(`DRC20 Balances:`, balances);
+```
+
+### getDrc20Info
+
+Retrieve information about a specific DRC20 token.
+
+#### Parameters
+
+\- \`params\` (object):  
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.
+
+#### Returns
+
+\- \`Promise\<Drc20Info\>\`: An object containing information about the DRC20 token.
+
+#### Usage Example
+
+```
+const tokenInfo = await getDrc20Info({ ticker: 'MYTOKEN' });
+console.log(`DRC20 Token Info:`, tokenInfo);
+```
+
+## Notes
+
+\- All methods are asynchronous and return Promises.  
+\- Ensure that you handle errors appropriately by using try-catch blocks or \`.catch()\` methods.  
+\- Before broadcasting transactions, make sure to get user confirmations where necessary.  
+\- The \`addressIndex\` parameter is crucial for methods that require access to a private key or address. Ensure that you use the correct index.  
+\- For methods that involve fees, the fee rate is fetched automatically, but users are prompted to confirm before proceeding.
