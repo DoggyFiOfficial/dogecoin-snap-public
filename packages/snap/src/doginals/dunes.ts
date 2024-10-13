@@ -129,7 +129,6 @@ export async function splitDunesUtxosTX(
 ): Promise<[string, number]> {
   // get Dunes UTXOs out of the wallet;
   let duneUtxos: APEUTXO[];
-  let totalDuneBalance: bigint = BigInt(0);
   // we use the if statement to check if the user has provided the utxos
   // the saves costs of calling extractDuneUtxos (particularly when send calls it)
   if (_duneUtxosMap === null) {
@@ -138,24 +137,20 @@ export async function splitDunesUtxosTX(
       throw new Error('Could not find enough dune utxos');
     }
     duneUtxos = _.duneUtxos;
-    totalDuneBalance = BigInt(_.totalAmount);
   } else {
     duneUtxos = _duneUtxosMap.utxos;
-    totalDuneBalance = _duneUtxosMap.totalAmount;
   }
 
   // if you know dune id, this is a lot safer
   // but user shouldn't need to know it if they are not super technical
   // by default, we will use the dune id from the getDune method
-  let duneID: string | null = null;
+  let duneID: string | null = _duneID;
   if (duneID === null) {
     const resp = await fetchDuneInfo(dune);
     if (resp === null) {
       throw new Error('Could not fetch dune info');
     }
     duneID = resp.id;
-  } else {
-    duneID = duneID;
   }
 
   const res = await _splitDunesUtxosTx(
