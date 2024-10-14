@@ -1,6 +1,6 @@
 # DoggyFi Snap
 
-For the full information and tutorial, consult the [root README](../../README.md).
+For the full information and tutorial, consult the [README](https://github.com/DoggyFiOfficial/dogecoin-snap/blob/main/README.md).
 
 ## Features
 

@@ -1,17 +1,7 @@
 {
   "name": "dogecoin-snap",
   "version": "0.1.1",
-  "private": true,
-  "description": "",
-  "homepage": "https://github.com/YOUR-USERNAME/dogecoin-snap#readme",
-  "bugs": {
-    "url": "https://github.com/YOUR-USERNAME/dogecoin-snap/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+git+https://github.com/YOUR-USERNAME/dogecoin-snap.git"
-  },
-  "license": "(MIT-0 OR Apache-2.0)",
+  "license": "Apache-2.0",
   "author": "@rashadalh",
   "workspaces": [
     "packages/*"
@@ -53,7 +43,7 @@
     "prettier": "2.8.8",
     "prettier-plugin-packagejson": "2.4.3",
     "ts-node": "10.9.2",
-    "typescript": "5.5.4"
+    "typescript": "4.9.5"
   },
   "packageManager": "yarn@3.2.1",
   "engines": {
