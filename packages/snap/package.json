@@ -1,13 +1,9 @@
 {
-  "name": "@doggyfiofficial/dogecoin-snap",
-  "version": "0.1.0",
-  "private": true,
-  "description": "A MetaMask snap for managing Dogecoin and Doginal assets",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
-  },
-  "license": "(MIT-0 OR Apache-2.0)",
+  "name": "@doggyfi-official/kobosu",
+  "version": "0.1.2",
+  "private": false,
+  "description": "A MetaMask snap for managing Dogecoin meta assets",
+  "license": "Apache-2.0",
   "main": "src/index.ts",
   "files": [
     "dist/",
@@ -18,9 +14,7 @@
     "build": "mm-snap build",
     "build:clean": "yarn clean && yarn build",
     "clean": "rimraf dist",
-    "lint": "yarn lint:eslint && yarn lint:misc --check",
-    "lint:eslint": "eslint . --cache --ext js,ts",
-    "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
+    "lint": "eslint . --cache --ext js,ts",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!CHANGELOG.md' --ignore-path .gitignore",
     "serve": "mm-snap serve",
     "start": "mm-snap watch"
@@ -36,32 +30,23 @@
     "envify": "^4.1.0"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.24.7",
-    "@lavamoat/allow-scripts": "^2.0.3",
-    "@metamask/auto-changelog": "^2.6.0",
-    "@metamask/eslint-config": "^10.0.0",
-    "@metamask/eslint-config-jest": "^10.0.0",
-    "@metamask/eslint-config-nodejs": "^10.0.0",
-    "@metamask/eslint-config-typescript": "^10.0.0",
-    "@metamask/snaps-cli": "flask",
-    "@typescript-eslint/eslint-plugin": "^5.33.0",
-    "@typescript-eslint/parser": "^5.33.0",
-    "eslint": "^8.21.0",
-    "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-jest": "^26.8.2",
-    "eslint-plugin-jsdoc": "^39.2.9",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.2.1",
-    "prettier-plugin-packagejson": "^2.2.11",
-    "rimraf": "^3.0.2",
-    "through2": "^4.0.2",
-    "typescript": "^4.7.4"
+    "@metamask/snaps-cli": "0.34.1-flask.1",
+    "babel-jest": "29.7.0",
+    "bitcoinjs-message": "2.2.0",
+    "bitcore-lib-doge": "8.25.46",
+    "eslint": "8.41.0",
+    "eslint-plugin-import": "2.27.5",
+    "eslint-plugin-jest": "26.9.0",
+    "eslint-plugin-jsdoc": "39.9.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "prettier": "2.8.8",
+    "rimraf": "3.0.2",
+    "through2": "2.0.5",
+    "typescript": "4.9.5"
   },
-  "packageManager": "yarn@3.2.1",
   "engines": {
-    "node": ">=16.0.0"
+    "node": "^16.0.0"
   },
   "publishConfig": {
     "access": "public",

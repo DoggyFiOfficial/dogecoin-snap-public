@@ -7,13 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach --parallel --topological --verbose run build",
+    "build": "bun run --cwd packages/snap build",
     "format": "prettier --write 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' && eslint 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' --fix",
-    "lint": "yarn lint:eslint && yarn lint:misc --check",
+    "lint": "bun lint:eslint && bun lint:misc --check",
     "lint:eslint": "eslint . --cache --ext js,ts",
-    "lint:fix": "yarn lint:eslint --fix && yarn lint:misc --write",
+    "lint:fix": "bun lint:eslint --fix && bun lint:misc --write",
     "lint:misc": "prettier '**/*.json' '**/*.md' '!**/CHANGELOG.md' '**/*.yml' --ignore-path .gitignore",
-    "start": "yarn workspaces foreach --parallel --interlaced --verbose run start",
+    "start": "bun run --cwd packages/site start & bun run --cwd packages/snap start",
     "test": "echo \"TODO\""
   },
   "devDependencies": {
@@ -45,7 +45,7 @@
     "ts-node": "10.9.2",
     "typescript": "4.9.5"
   },
-  "packageManager": "yarn@3.2.1",
+  "packageManager": "bun@3.2.1",
   "engines": {
     "node": "=22.3.0"
   }
