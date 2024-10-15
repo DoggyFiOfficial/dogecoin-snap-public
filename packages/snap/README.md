@@ -1,6 +1,6 @@
 # DoggyFi Snap
 
-For the full information and tutorial, consult the [README](https://github.com/DoggyFiOfficial/dogecoin-snap/blob/main/README.md).
+For the full information and tutorial, consult the [README](https://sayfer.io/audits/metamask-snap-audit-report-for-doggyfi/).
 
 ## Features
 
@@ -18,13 +18,17 @@ The snap has the following features:
 - Send Doginals
 - Inscribe Doginals
 - Open Dunes
+- Mint Dunes
+- Send Dunes
+- Get metadata for DRC tokens
+- Get metadata for Dunes
+- Get list of Dunes Tokens for Address
 
 
 ## Permissions
 
 The snap requires the following [permissions](https://docs.metamask.io/snaps/reference/permissions/):
 
-- `endowment:network-access` - To connect to the [Tatum Dogecoin API](https://apidoc.tatum.io/tag/Dogecoin/).
 - `snap_dialog` - To display a popup requiring the user to confirm a Dogecoin transaction.
 - `endowment:rpc` - To allow Dapps to communicate with the snap's RPC API
 - `snap_getBip44Entropy` - To derive Testnet private keys from the MetaMask secret recovery phrase
