@@ -10,7 +10,7 @@ Let's get started! 🎢🚀
 DoggyFi's snap has been throughly audited for potential attack vectors by Sayfer, you can read the audit report [here](https://sayfer.io/audits/metamask-snap-audit-report-for-doggyfi/).
 
 ## Video Preview
-Per metamask's request, we have also created a video preview of the snap which you can view [here](https://drive.google.com/file/d/1hyvmK4hJn5BWKXRfy5OfIiJx9GeSQg3m/view?usp=sharing).
+Per metamask's request, we have also created a video preview of the snap which you can view [here](https://drive.google.com/file/d/1ybk0g2ggQN3UoTQTkmkvf5tGohM9AOV3/view?usp=sharing).
 
 ## Pre-work
 
