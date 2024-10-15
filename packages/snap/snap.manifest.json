@@ -1,6 +1,6 @@
 {
-  "version": "0.1.0",
-  "description": "A snap to manage Dogecoin + Doginal assets",
+  "version": "0.1.2",
+  "description": "A snap to manage Dogecoin and Doginals meta assets",
   "proposedName": "DoggyFi Snap",
   "repository": {
     "type": "git",
