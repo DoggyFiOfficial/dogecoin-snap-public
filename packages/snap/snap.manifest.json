@@ -1,18 +1,14 @@
 {
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "A snap to manage Dogecoin and Doginals meta assets",
-  "proposedName": "DoggyFi Snap",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/MetaMask/template-snap-monorepo.git"
-  },
+  "proposedName": "kobosu",
   "source": {
-    "shasum": "tQD0xcmUBVRRvO2TWOCekImj/6ukNIVRc2/CAEDsgT0=",
+    "shasum": "E88JeO5YRBVE3tZSNLKF0uttDMZx40vHk9fiV5pp4+A=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/icon.svg",
-        "packageName": "@doggyfiofficial/dogecoin-snap",
+        "packageName": "@doggyfi-official/kobosu",
         "registry": "https://registry.npmjs.org/"
       }
     }

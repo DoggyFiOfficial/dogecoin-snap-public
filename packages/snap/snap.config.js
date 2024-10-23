@@ -1,6 +1,6 @@
 /* eslint-disable node/no-process-env */
 const through = require('through2');
-const envify = require('envify/custom');
+
 require('dotenv').config();
 
 module.exports = {
@@ -24,10 +24,5 @@ module.exports = {
           },
         );
       })
-      .transform(
-        envify({
-          TATUM_API_KEY: process.env.TATUM_API_KEY,
-        }),
-      );
   },
 };

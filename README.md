@@ -14,16 +14,21 @@ Per metamask's request, we have also created a video preview of the snap which y
 
 ## Pre-work
 
-If this is your first time developing with Snaps, take a look at the [Snaps introduction](https://docs.metamask.io/snaps/) and [Snaps Getting Started Guide](https://docs.metamask.io/snaps/category/get-started/) before diving into this tutorial.
+To run and test the snap in flask with our local testing site:
 
-## Install and starting the snap
-Everything you need to get started is contained in the snap. To set up the snap, please do the following:
-1. `yarn install`  
-2. `yarn build` 
+```javascript
+bun i
+bun run build
+bun run start
+```
 
-In testing we used node v22.3.0, and yarn 3.2.1
+Then open a browser window with metamask flask installed, and go to `http://localhost:8000`
 
-To start the snap simply run `yarn start`. After the script finishes runnning you should see be able to view the gatsby app by loading `http://localhost:8000/`
+**Some notes to avoid unnecessary headache**  
+*(1) If you are trying to run this locally, be sure you free up ports 8000 (site), and 8080 (mm-serve)*  
+*(2) Note, you may get some build errors if you do not use the reccomend version of node. Please run `nvm use` before starting*  
+*(3) While you don't have to run bun, it just makes local package management SO much easier. It is strongly reccomend*  
+*(4) Warnings while running bun run build are not consequential in our local testing of the snap, while we will address these in a future update, for now they can be safely ignored. Just continue to `bun run start`*
 
 ## Snap overview
 

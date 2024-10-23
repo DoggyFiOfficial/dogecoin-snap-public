@@ -8,5 +8,4 @@
     "jsx": "preserve"
   },
   "include": ["src"],
-  "references": [{ "path": "../snap" }]
 }

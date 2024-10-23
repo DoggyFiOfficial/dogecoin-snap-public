@@ -1,4 +1,4 @@
-import type { RpcMethodTypes } from '@doggyfiofficial/dogecoin-snap';
+import type { RpcMethodTypes } from '@doggyfi-official/kobosu';
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
 
