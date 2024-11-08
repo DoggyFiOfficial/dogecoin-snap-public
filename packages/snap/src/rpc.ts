@@ -1269,7 +1269,7 @@ export async function sendDoginal(
   psbt.signAllInputs(
     bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
-  psbt.finalizeAllInputs();
+
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
   const txResponse = await pushTransaction(txHex);
   if (txResponse === null) {
