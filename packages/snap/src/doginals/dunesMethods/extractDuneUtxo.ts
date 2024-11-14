@@ -43,6 +43,38 @@ export async function extractDuneUtxo(
 }
 
 /**
+ * Sums the decimal parts of the input amounts and returns a string with the correct decimal placement.
+ *
+ * @param amounts - An array of decimal strings.
+ * @returns A string with the correct decimal placement.
+ */
+function sumDecimalStrings(amounts: string[], decimals: number): string {
+  // Determine the maximum number of decimal places in the input amounts
+  let totalAmount = BigInt(0);
+  for (const amount of amounts) {
+    // Normalize each amount to the maxDecimals by padding with zeros
+    if (amount.includes('e')) {
+      throw new Error('Amounts must not include scientific notation!');
+    }
+    const [integerPart, fractionalPart = ''] = amount.split('.');
+    const normalizedAmount =
+      integerPart + fractionalPart.padEnd(decimals, '0');
+    totalAmount += BigInt(normalizedAmount);
+  }
+
+  // Convert the total back to a string with the correct decimal placement
+  const totalString = totalAmount.toString();
+  const integerPartLength = totalString.length - decimals;
+
+  return integerPartLength > 0
+    ? `${totalString.slice(0, integerPartLength)}.${totalString.slice(
+        integerPartLength,
+      )}`
+    : `0.${'0'.repeat(-integerPartLength)}${totalString}`;
+}
+
+
+/**
  * Gets the Dune UTXOs that can at least cover the the total amount to send
  *
  * @param wallet -- Apezord Wallet object.
@@ -61,10 +93,11 @@ export async function extractDuneUtxos(
   totalAmount: string;
 } | null> {
   // first check if the exact amounts can be covered
-  let totalAmount = BigInt(0)
-  for (const amount of amounts) {
-    totalAmount += BigInt(amount);
+  const resp = await fetchDuneInfo(dune);
+  if (resp === null) {
+    throw new Error('Could not fetch dune info');
   }
+  const totalAmount = sumDecimalStrings(amounts, resp.divisibility);
 
   if (checkForSingleUtxo) {
     const _ = await extractDuneUtxo(wallet, totalAmount.toString(), dune);
@@ -78,10 +111,6 @@ export async function extractDuneUtxos(
     }
   }
   // get id for the dune
-  const resp = await fetchDuneInfo(dune);
-  if (resp === null) {
-    throw new Error('Could not fetch dune info');
-  }
   const duneID = resp.id;
 
   let duneUtxos: APEUTXO[] = [];
@@ -107,5 +136,5 @@ export async function extractDuneUtxos(
   if (duneUtxos.length === 0) {
     return null;
   }
-  return { duneUtxos: duneUtxos, duneInfo: resp, totalAmount: amountAcc.toString() };
+  return { duneUtxos: duneUtxos, duneInfo: resp, totalAmount: bigIntToDecimalString(amountAcc.toString(), Number(resp.divisibility)) };
 }

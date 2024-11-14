@@ -709,7 +709,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="amount"
                         placeholder="Exact amount of the dune to send"
                         onChange={(e) => e.target.value}

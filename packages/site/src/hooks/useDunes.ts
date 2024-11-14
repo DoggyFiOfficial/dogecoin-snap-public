@@ -12,7 +12,7 @@ export const useSendDune = () => {
 
     const addressIndex = Number(data.get('addressIndex'));
     const toAddress = String(data.get('toAddress'));
-    const amount = Number(data.get('amount'));
+    const amount = data.get('amount');
     const dune = String(data.get('dune'));
 
     const params = {
