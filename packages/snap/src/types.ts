@@ -660,7 +660,7 @@ export function assertIsSendDuneParams(
       typeof params.toAddress === 'string' &&
       'amount' in params &&
       'amount' !== null &&
-      typeof params.amount === 'number' &&
+      typeof params.amount === 'string' &&
       params.amount > 0 &&
       'dune' in params &&
       'dune' !== null &&

@@ -8,6 +8,7 @@ import { getBlockCount } from '../queries';
 import { extractDuneUtxos } from './dunesMethods/extractDuneUtxo';
 import { getDuneBalances, DuneBalance } from './dunesMethods/getDunesBalances';
 import { fetchDuneInfo } from '../doggyfi-apis/dunesInfo';
+import { decimalToBigInt } from './dunesMethods/bigIntMethods';
 
 /**
  * Checks which utxos don't have dunes based on a list of dunes for the wallet.
@@ -145,20 +146,24 @@ export async function splitDunesUtxosTX(
   // but user shouldn't need to know it if they are not super technical
   // by default, we will use the dune id from the getDune method
   let duneID: string | null = _duneID;
+  const resp = await fetchDuneInfo(dune);
+  if (resp === null) {
+    throw new Error('Could not fetch dune info');
+  }
   if (duneID === null) {
-    const resp = await fetchDuneInfo(dune);
-    if (resp === null) {
-      throw new Error('Could not fetch dune info');
-    }
     duneID = resp.id;
   }
-
+  // need to pass in the string representation of the amounts, pad the decimals with 0s
+  const _amounts = [];
+  for (const amount of amounts) {
+    _amounts.push(decimalToBigInt(amount, Number(resp.divisibility)).toString());
+  }
   const res = await _splitDunesUtxosTx(
     wallet,
     addresses,
     duneID,
     duneUtxos,
-    amounts,
+    _amounts,
     doggyfiFee,
     doggyfiAddress,
   );
