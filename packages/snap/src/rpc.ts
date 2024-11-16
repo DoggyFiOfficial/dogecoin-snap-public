@@ -819,6 +819,7 @@ export async function sendDune(params: sendDuneParams) {
  * @returns A promise of the transaction hash.
  */
 export async function openDune(params: openDuneTxParams) {
+  console.log('openDune params', params);
   const confirmationResponse = await snap.request({
     method: 'snap_dialog',
     params: {
@@ -909,6 +910,7 @@ export async function openDune(params: openDuneTxParams) {
   }
   return txResponse.txid;
 }
+
 /**
  * Mint a Dune transaction.
  *
@@ -985,6 +987,7 @@ export async function mintDune(params: mintDuneTxParams) {
   }
   return txResponse.txid;
 }
+
 /**
  * Split a Dune transaction.
  *

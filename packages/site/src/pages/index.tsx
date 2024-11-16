@@ -765,7 +765,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="amount"
                         placeholder="Amount of Dune to mint"
                         onChange={(e) => e.target.value}
@@ -829,7 +829,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="limit"
                         placeholder="mint limit"
                         onChange={(e) => e.target.value}
@@ -837,7 +837,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="divisibility"
                         placeholder="How many decimals the dune can be divided into"
                         onChange={(e) => e.target.value}
@@ -845,7 +845,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="cap"
                         placeholder="(optional) supply cap of the dune"
                         onChange={(e) => e.target.value}
@@ -885,7 +885,7 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="number"
+                        type="string"
                         name="premine"
                         placeholder="premine amount"
                         onChange={(e) => e.target.value}

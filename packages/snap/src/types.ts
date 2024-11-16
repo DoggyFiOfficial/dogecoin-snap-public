@@ -1,4 +1,4 @@
-import { assert } from 'console';
+import { moveDecimalToRight } from './doginals/dunes';
 
 export type MakeTransactionParams = {
   addressIndex: number;
@@ -96,7 +96,6 @@ export type splitDuneTxParams = {
 };
 export type mintDuneTxParams = {
   addressIndex: number;
-  toAddress: string;
   id: string;
   amount: string;
   receiver: string;
@@ -487,7 +486,7 @@ export function assertIsOpenDuneTxParams(
     if (
       !('limit' in params) ||
       typeof params.limit !== 'string' ||
-      !(BigInt(params.limit) > BigInt(0))
+      !(moveDecimalToRight(params.limit) > BigInt(0))
     ) {
       throw new Error(
         `params must include a valid limit of type number and greater than 0 but got limit ' + ${params.limit} <--`,
@@ -516,7 +515,7 @@ export function assertIsOpenDuneTxParams(
     if (
       !('cap' in params) ||
       typeof params.cap !== 'string' ||
-      !(BigInt(params.cap) > BigInt(0))
+      !(moveDecimalToRight(params.cap) > BigInt(0))
     ) {
       throw new Error(
         'params must include a valid `cap` of type number and greater than 0',
@@ -616,7 +615,7 @@ export function assertIsOpenDuneTxParams(
   if (
     !('premine' in params) ||
     typeof params.premine !== 'string' ||
-    !(BigInt(params.premine) >= BigInt(0))
+    !(moveDecimalToRight(params.premine) >= BigInt(0))
   ) {
     throw new Error(
       'params must include a valid `premine` of type number and greater than or equal to 0',
@@ -730,7 +729,7 @@ export function assertIsSplitDuneTxParams(
 }
 
 /**
- * Throws if value passed in isn't of type mintDuneTxParams
+ * Throws if value passed in isn't of type mintDuneTxParams.
  *
  * @param params - The value to be checked.
  */
@@ -749,19 +748,21 @@ export function assertIsMintDuneTxParams(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
       params !== null &&
-      'toAddress' in params &&
-      typeof params.toAddress === 'string' &&
+      'addressIndex' in params &&
+      typeof params.addressIndex === 'number' &&
+      params.addressIndex >= 0 &&
       'id' in params &&
       'id' !== null &&
       typeof params.id === 'string' &&
       params.id.length > 0 &&
       'amount' in params &&
       typeof params.amount === 'string' &&
-      BigInt(params.amount) > BigInt(0) &&
+      moveDecimalToRight(params.amount) > BigInt(0) &&
       'receiver' in params &&
       'receiver' !== null &&
       typeof params.receiver === 'string' &&

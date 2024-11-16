@@ -144,14 +144,12 @@ export const useMintDunes = () => {
     setLoading(true);
     setError(null);
     const addressIndex = data.get('addressIndex');
-    const toAddress = data.get('toAddress');
     const id = data.get('id');
     const _amount = data.get('amount');
     const receiver = data.get('receiver');
 
     const params = {
       addressIndex: Number(addressIndex),
-      toAddress: String(toAddress),
       id: String(id),
       amount: String(_amount),
       receiver: String(receiver),

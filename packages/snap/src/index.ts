@@ -20,7 +20,7 @@ import {
   getDuneBalancesForAccount,
   getDuneMetadata,
   getDrc20Balance,
-  inscribeData
+  inscribeData,
 } from './rpc';
 import {
   assertIsMakeTransactionParams,
@@ -119,7 +119,7 @@ export const onRpcRequest: OnRpcRequestHandler = async ({ request }) => {
     case 'doge_getDuneMetadata':
       assertIsGetDuneMetadataParams(request.params);
       return getDuneMetadata(request.params);
-    
+
     case 'doge_getDrc20Balance':
       assertIsAddressParams(request.params);
       return getDrc20Balance(request.params);
