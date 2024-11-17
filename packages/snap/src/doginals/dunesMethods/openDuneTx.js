@@ -155,7 +155,7 @@ export async function _getOpenDuneTx(
   if (premine > 0) tx.to(wallet.address, 100_000);
   
   // finally add doggyfi fee
-  tx.to(doggyfiAddress, doggyfiFee);
+  //tx.to(doggyfiAddress, doggyfiFee);
 
   await fund(wallet, tx, dunesBalances, true);
   let _tx = tx.uncheckedSerialize();

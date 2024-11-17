@@ -39,7 +39,6 @@ export async function utxosWithoutDunes(
 /**
  * Open a dune and send it to the receiver.
  *
- *
  * @param wallet - The wallet to use.
  * @param tick - The tick of the dune to open.
  * @param symbol - The symbol of the dune to open.
@@ -81,11 +80,24 @@ export async function openDuneTx(
   const dunesBalances = await getDuneBalances(wallet); // might be redundant, to refactor
   // convert value strings, to bigint representation
 
-  const _limit =
-    limit === null ? null : removeDecimal(padWithZeros(limit, divisibility));
-  const _cap =
-    cap === null ? null : removeDecimal(padWithZeros(cap, divisibility));
-  const _premine = padWithZeros(premine, divisibility);
+  let _limit = null;
+  let _cap = null;
+  if (limit) {
+    _limit = nullNullOrEmpty(limit)
+      ? null
+      : removeDecimal(padWithZeros(limit, divisibility));
+  }
+
+  if (cap) {
+    _cap = nullNullOrEmpty(cap)
+      ? null
+      : removeDecimal(padWithZeros(cap, divisibility));
+  }
+
+  const _premine =
+    nullNullOrEmpty(premine) || premine === '0'
+      ? '0'
+      : removeDecimal(padWithZeros(premine, divisibility));
 
   const res = await _getOpenDuneTx(
     wallet,
@@ -336,4 +348,17 @@ function removeDecimal(amount: string): string {
     return amount;
   }
   return _[0] + _[1];
+}
+
+/**
+ * Check if a string is null, undefined, or empty.
+ *
+ * @param str - The string to check.
+ * @returns Boolean indicating if the string is null, undefined, or empty.
+ */
+function nullNullOrEmpty(str: string | null | undefined): boolean {
+  if (str === null || str === undefined) {
+    return true;
+  }
+  return str.length === 0;
 }
