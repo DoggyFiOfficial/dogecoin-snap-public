@@ -651,6 +651,7 @@ export function assertIsSendDuneParams(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -660,7 +661,6 @@ export function assertIsSendDuneParams(
       'amount' in params &&
       'amount' !== null &&
       typeof params.amount === 'string' &&
-      params.amount > 0 &&
       'dune' in params &&
       'dune' !== null &&
       typeof params.dune === 'string' &&
