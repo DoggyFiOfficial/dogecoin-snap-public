@@ -66,7 +66,7 @@ export const _mintDuneTx = async (
   tx.to(receiver, 100_000);
 
   // finally add doggyfi fee
-  //tx.to(doggyfiAddress, doggyfiFee);
+  tx.to(doggyfiAddress, doggyfiFee);
 
   await fund(wallet, tx);
 
