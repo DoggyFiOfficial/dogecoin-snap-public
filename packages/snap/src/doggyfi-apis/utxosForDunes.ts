@@ -25,8 +25,8 @@ export async function fetchDuneData(
 
   let result: DuneUtxoResponse = await response.json();
 
-  while (result.next_cursor) {
-    url = `https://api.doggyfi.xyz/dunes/utxo/${dune}?cursor=${result.next_cursor}`;
+  while (result.nextCursor) {
+    url = `https://api.doggyfi.xyz/dunes/utxo/${dune}?cursor=${result.nextCursor}`;
     response = await fetch(url);
     if (!response.ok) {
       console.error(
@@ -34,7 +34,9 @@ export async function fetchDuneData(
       );
       break;
     }
-    result.data.push(...(await response.json()).data);
+    const resp = await response.json();
+    result.data.push(...resp.data);
+    result.nextCursor = resp.nextCursor;
   }
 
   return result;
