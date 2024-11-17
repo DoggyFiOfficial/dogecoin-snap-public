@@ -36,6 +36,26 @@ export async function utxosWithoutDunes(
   return safeUtxos;
 }
 
+/**
+ * Open a dune and send it to the receiver.
+ *
+ * @param wallet - The wallet to use.
+ * @param tick - The tick of the dune to open.
+ * @param symbol - The symbol of the dune to open.
+ * @param limit - Optional, the limit of the dune to open.
+ * @param divisibility - The divisibility of the dune to open.
+ * @param cap - Optional The cap of the dune to open.
+ * @param heightStart - Optional, the block height start of the dune to open.
+ * @param heightEnd - Optional, the block height end of the dune to open.
+ * @param offsetStart - Optional, the offset start of the dune to open.
+ * @param offsetEnd - Optional, the offset end of the dune to open.
+ * @param premine - The premine of the dune to open.
+ * @param turbo - If true subscribed to protocol uprgrades.
+ * @param openMint - If true, the dune can be minted uninterrupted until it is closed.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
+ * @returns The transaction and the fees.
+ */
 export async function openDuneTx(
   wallet: Wallet,
   tick: string,
@@ -53,36 +73,66 @@ export async function openDuneTx(
   doggyfiFee: number,
   doggyfiAddress: string,
 ): Promise<[string, number]> {
-
   const blockCount = await getBlockCount();
   if (blockCount === null) {
     throw new Error('Could not fetch block count');
   }
   const dunesBalances = await getDuneBalances(wallet); // might be redundant, to refactor
+  // convert value strings, to bigint representation
+
+  let _limit = null;
+  let _cap = null;
+  if (limit) {
+    _limit = nullNullOrEmpty(limit)
+      ? null
+      : removeDecimal(padWithZeros(limit, divisibility));
+  }
+
+  if (cap) {
+    _cap = nullNullOrEmpty(cap)
+      ? null
+      : removeDecimal(padWithZeros(cap, divisibility));
+  }
+
+  const _premine =
+    nullNullOrEmpty(premine) || premine === '0'
+      ? '0'
+      : removeDecimal(padWithZeros(premine, divisibility));
+
   const res = await _getOpenDuneTx(
     wallet,
     blockCount,
     dunesBalances,
     tick,
     symbol,
-    limit,
+    _limit,
     divisibility,
-    cap,
+    _cap,
     heightStart,
     heightEnd,
     offsetStart,
     offsetEnd,
-    premine,
+    _premine,
     String(turbo),
     String(openMint),
     doggyfiFee,
     doggyfiAddress,
   );
 
-  return [res['tx'], res['fees']];
+  return [res.tx, res.fees];
 }
 
-// TODO: write fetch divisibility and limit into card to make it easier to use for end user
+/**
+ * Mint a dune (if it is open to mint) and send it to the receiver.
+ *
+ * @param wallet - The wallet to use.
+ * @param id - The id of the dune to mint.
+ * @param _amount - The amount to mint.
+ * @param receiver - The receiver of the dune.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
+ * @returns The transaction and the fees.
+ */
 export async function mintDuneTx(
   wallet: Wallet,
   id: string,
@@ -93,25 +143,36 @@ export async function mintDuneTx(
 ): Promise<[string, number]> {
   const duneData = await fetchDuneInfo(id); // check if output has changed
   if (duneData === null) {
-    throw new Error('Could not fetch dune info for dune/id ' + id);
+    throw new Error(`Could not fetch dune info for dune/id ${id}`);
   }
-  const amount = BigInt(_amount);
+  // if there are less decimals than what the dune requires, pad with 0s
+  const finalAmount = moveDecimalToRight(
+    padWithZeros(_amount, duneData.divisibility),
+  );
   let mintCap: bigint | null;
   if (duneData.terms.amount_per_mint) {
     mintCap = moveDecimalToRight(String(duneData.terms.amount_per_mint));
   } else {
-    mintCap = null
+    mintCap = null;
   }
+
   // if there is a mint cap, check if the amount is within the cap
   if (mintCap) {
-    if (amount > mintCap) { // check line
+    if (finalAmount > mintCap) {
       throw new Error('Mint amount exceeds mint cap');
     }
   }
 
-  const res = await _mintDuneTx(wallet, id, amount, receiver, doggyfiFee, doggyfiAddress);
+  const res = await _mintDuneTx(
+    wallet,
+    id,
+    finalAmount.toString(),
+    receiver,
+    doggyfiFee,
+    doggyfiAddress,
+  );
 
-  return [res['tx'], res['fees']];
+  return [res.tx, res.fees];
 }
 
 export async function splitDunesUtxosTX(
@@ -228,7 +289,13 @@ export async function sendDuneTx(
   return [tx, fees];
 }
 
-function moveDecimalToRight(value: string): bigint {
+/**
+ * Moves decimal to right and returns a bigint.
+ *
+ * @param value - The value to be moved.
+ * @returns Returns a bigint.
+ */
+export function moveDecimalToRight(value: string): bigint {
   // 1. Remove the decimal point by splitting on it
   const [integerPart, fractionalPart] = value.split('.');
 
@@ -237,4 +304,61 @@ function moveDecimalToRight(value: string): bigint {
 
   // 3. Convert the result into a BigInt
   return BigInt(combined);
+}
+
+/**
+ * Pads with strings of 0s to the right based on the divisibility.
+ *
+ * @param amount - The value to be padded.
+ * @param divisibility - The divisibility of the value.
+ * @returns The padded value.
+ */
+function padWithZeros(amount: string, divisibility: number): string {
+  let numDigits = 0;
+  if (amount.includes('.')) {
+    numDigits = amount.split('.')[1].length;
+  }
+  // if there are more digits than the divisibility, throw an error
+
+  if (numDigits > divisibility) {
+    throw new Error(
+      `Amount has more digits after the '.' than the dune allows. Amount: ${amount}, dune divisibility: ${divisibility}`,
+    );
+  }
+  let _amount = amount;
+  for (let i = 0; i < divisibility - numDigits; i++) {
+    _amount += '0';
+  }
+
+  return _amount;
+}
+
+/**
+ * Rip out "." from the amount.
+ *
+ * @param amount - The amount as string to be ripped out.
+ * @returns The amount without the ".".
+ */
+function removeDecimal(amount: string): string {
+  if (amount.length <= 0) {
+    throw new Error('Amount must be a non-empty string');
+  }
+  const _ = amount.split('.');
+  if (_.length <= 1) {
+    return amount;
+  }
+  return _[0] + _[1];
+}
+
+/**
+ * Check if a string is null, undefined, or empty.
+ *
+ * @param str - The string to check.
+ * @returns Boolean indicating if the string is null, undefined, or empty.
+ */
+function nullNullOrEmpty(str: string | null | undefined): boolean {
+  if (str === null || str === undefined) {
+    return true;
+  }
+  return str.length === 0;
 }

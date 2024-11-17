@@ -23,8 +23,8 @@ export async function fetchUTXOs(
 
   let result: UnspentsResponseData = await response.json();
 
-  while (result.next_cursor) {
-    url = `https://api.doggyfi.xyz/unspents/${address}?cursor=${result.next_cursor}`;
+  while (result.nextCursor) {
+    url = `https://api.doggyfi.xyz/unspents/${address}?cursor=${result.nextCursor}`;
     response = await fetch(url);
     if (!response.ok) {
       console.error(
@@ -32,7 +32,9 @@ export async function fetchUTXOs(
       );
       break;
     }
-    result.unspents.push(...(await response.json()).unspents);
+    const resp = await response.json();
+    result.unspents.push(...resp.unspents);
+    result.nextCursor = resp.nextCursor;
   }
 
   return result;

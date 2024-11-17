@@ -36,7 +36,7 @@ export interface UnspentsResponseData {
     block_hash: string;
     block_height: number;
   };
-  next_cursor: string | null;
+  nextCursor: string | null;
 }
 
 export interface UTXOMapping {
@@ -63,7 +63,7 @@ export interface DuneUtxoResponse {
     block_hash: string;
     block_height: number;
   };
-  next_cursor: string | null;
+  nextCursor: string | null;
 }
 
 export interface DuneTerms {

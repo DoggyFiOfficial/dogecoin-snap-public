@@ -1,9 +1,9 @@
 {
-  "version": "0.1.4",
+  "version": "0.1.6",
   "description": "A snap to manage Dogecoin and Doginals meta assets",
   "proposedName": "kobosu",
   "source": {
-    "shasum": "YFqaLVVGWvaD10jmFLO2gSrtrBijilWzd76VRdWr7no=",
+    "shasum": "KPXdImOzLDRqSutmdfZyX/XH1a47OPMzvkKeo5LWPzA=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

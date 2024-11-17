@@ -49,7 +49,6 @@ export async function makeWalletFromDogeOrd(
       script: unspent.scriptPubKey,
     });
   }
-
   // make an apzord wallet
   return createWallet(privkey, address, apeutxos);
 }

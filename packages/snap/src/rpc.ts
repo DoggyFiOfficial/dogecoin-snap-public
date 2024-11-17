@@ -909,6 +909,7 @@ export async function openDune(params: openDuneTxParams) {
   }
   return txResponse.txid;
 }
+
 /**
  * Mint a Dune transaction.
  *
@@ -971,6 +972,9 @@ export async function mintDune(params: mintDuneTxParams) {
           `Minting this Dune transaction will cost you the following in DOGE`,
         ),
         copyable((fees / 100_000_000).toString()),
+        text('Doggyfi will in addition charge the following in DOGE'),
+        text('These are already included in the fees quoted above'),
+        copyable((Number(tip.tip) / 100_000_000).toString()),
         text('Please confirm this is OK to continue...'),
       ]),
     },
@@ -985,6 +989,7 @@ export async function mintDune(params: mintDuneTxParams) {
   }
   return txResponse.txid;
 }
+
 /**
  * Split a Dune transaction.
  *
