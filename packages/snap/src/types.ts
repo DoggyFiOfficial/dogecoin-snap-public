@@ -497,11 +497,11 @@ export function assertIsOpenDuneTxParams(
   if (
     !('divisibility' in params) ||
     typeof params.divisibility !== 'number' ||
-    params.divisibility <= 0 ||
-    params.divisibility > 255
+    params.divisibility < 0 ||
+    params.divisibility > 38
   ) {
     throw new Error(
-      'params must include a valid `divisibility` of type number and greater than 0 and less than 256',
+      'params must include a valid `divisibility` of type number and greater than 0 and less than 39',
     );
   }
 
