@@ -701,7 +701,7 @@ const Index = () => {
                   <form onSubmit={handleSendDune}>
                     <p>
                       <input
-                        type="string"
+                        type="text"
                         name="toAddress"
                         placeholder="Destination Address"
                         onChange={(e) => e.target.value}
@@ -709,15 +709,16 @@ const Index = () => {
                     </p>
                     <p>
                       <input
-                        type="string"
+                        type="number"
                         name="amount"
                         placeholder="Exact amount of the dune to send"
                         onChange={(e) => e.target.value}
+                        step="any"
                       />
                     </p>
                     <p>
                       <input
-                        type="string"
+                        type="text"
                         name="dune"
                         placeholder="name of dune being transferred"
                         onChange={(e) => e.target.value}
