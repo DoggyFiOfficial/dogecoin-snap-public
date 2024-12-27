@@ -2,20 +2,11 @@ module.exports = {
   experimental: {
     wasm: true,
   },
-  input: "src/index.ts",
+  input: 'src/index.ts',
   output: {
-    path: "dist",
+    path: 'dist',
   },
-  polyfills: {
-    assert: true,
-    url: true,
-    crypto: true,
-    stream: true,
-    string_decoder: true,
-    util: true,
-    punycode: true,
-    events: true,
-  },
+  polyfills: true,
   server: {
     port: 8080,
   },
