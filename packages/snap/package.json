@@ -21,29 +21,29 @@
     "start": "mm-snap watch"
   },
   "dependencies": {
-    "@metamask/key-tree": "^7.0.0",
-    "@metamask/snaps-types": "^0.32.2",
-    "@metamask/snaps-ui": "^0.32.2",
-    "bitcoinjs-lib": "^5.2.0",
+    "@metamask/key-tree": "^10.0.2",
+    "@metamask/snaps-types": "^3.1.0",
+    "@metamask/snaps-ui": "^3.1.0",
+    "bitcoinjs-lib": "^6.1.7",
     "buffer": "^6.0.3",
     "coininfo": "^5.2.1",
-    "dotenv": "^16.1.4"
+    "dotenv": "^16.4.7"
   },
   "devDependencies": {
-    "@metamask/snaps-cli": "0.38.4-flask.1",
+    "@metamask/snaps-cli": "6.6.0",
     "babel-jest": "29.7.0",
     "bitcoinjs-message": "2.2.0",
-    "bitcore-lib-doge": "8.25.46",
-    "eslint": "8.41.0",
-    "eslint-plugin-import": "2.27.5",
-    "eslint-plugin-jest": "26.9.0",
-    "eslint-plugin-jsdoc": "39.9.1",
+    "bitcore-lib-doge": "10.7.0",
+    "eslint": "9.17.0",
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-jest": "28.10.0",
+    "eslint-plugin-jsdoc": "50.6.1",
     "eslint-plugin-node": "11.1.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "prettier": "2.8.8",
-    "rimraf": "3.0.2",
-    "through2": "2.0.5",
-    "typescript": "4.9.5"
+    "eslint-plugin-prettier": "5.2.1",
+    "prettier": "3.4.2",
+    "rimraf": "6.0.1",
+    "through2": "4.0.2",
+    "typescript": "5.7.2"
   },
   "engines": {
     "node": "=16.20.2"
