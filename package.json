@@ -48,5 +48,8 @@
   "packageManager": "bun@3.2.1",
   "engines": {
     "node": "=16.20.2"
+  },
+  "dependencies": {
+    "tiny-secp256k1": "^2.2.3"
   }
 }

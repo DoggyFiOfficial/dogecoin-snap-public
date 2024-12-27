@@ -60,6 +60,10 @@ import { getUtxosForValue } from './getUtxosForValue';
 import { drc20BalByAddress } from './doggyfi-apis/drc20ByAddress';
 import { getDrc20Info as _getDrc20Info } from './doggyfi-apis/drc20Info';
 import { getTipRate } from './doggyfi-apis/tipRate';
+import ECPairFactory from 'ecpair';
+import * as ecc from 'tiny-secp256k1';
+
+const ECPair = ECPairFactory(ecc);
 
 const dogecoinFormat = coininfo.dogecoin.main.toBitcoinJS();
 const dogecoinNetwork = {
@@ -371,7 +375,7 @@ export const makeTransaction = async ({
   });
 
   psbt.signAllInputs(
-    bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+    ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();
   const txResponse = await pushTransaction(txHex);
@@ -419,13 +423,13 @@ export async function signPsbt(params: signPsbtParams): Promise<string> {
 
   if (!params.signIndices) {
     psbtCopy.signAllInputs(
-      bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+      ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
     );
   } else {
     for (const i of params.signIndices) {
       psbtCopy.signInput(
         i,
-        bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+        ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
       );
     }
   }
@@ -464,7 +468,7 @@ export async function signMessage(params: signMessageParams): Promise<string> {
     throw new Error('Signing must be approved by user');
   }
 
-  const keyPair = bitcoin.ECPair.fromPrivateKey(
+  const keyPair = ECPair.fromPrivateKey(
     Buffer.from(account.privateKeyBytes),
     {
       network: dogecoinNetwork,
@@ -515,7 +519,7 @@ export async function verifyMessage(
     throw new Error('Verification must be approved by user');
   }
   const address = await getAddress({ addressIndex: params.addressIndex });
-  const keyPair = bitcoin.ECPair.fromPrivateKey(
+  const keyPair = ECPair.fromPrivateKey(
     Buffer.from(account.privateKeyBytes),
     {
       network: dogecoinNetwork,
@@ -575,7 +579,7 @@ export async function pushPsbt(params: pushPsbtParams): Promise<string> {
  */
 function deriveBase58PrivateKey(privateKeyBytes: Uint8Array) {
   // Generate the keyPair
-  const keyPair = bitcoin.ECPair.fromPrivateKey(Buffer.from(privateKeyBytes), {
+  const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKeyBytes), {
     network: dogecoinNetwork,
   });
 
@@ -1272,7 +1276,7 @@ export async function sendDoginal(
 
   // log hex string of the psbt
   psbt.signAllInputs(
-    bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+    ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
   );
 
   const txHex = psbt.finalizeAllInputs().extractTransaction(true).toHex();

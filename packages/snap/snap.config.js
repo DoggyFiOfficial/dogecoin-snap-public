@@ -1,4 +1,7 @@
 module.exports = {
+  experimental: {
+    wasm: true,
+  },
   input: "src/index.ts",
   output: {
     path: "dist",
