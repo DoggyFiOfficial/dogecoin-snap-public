@@ -1,9 +1,10 @@
 // Method to filter for utxos by value
 import { UTXO } from './doggyfi-apis/interfaces';
+
 /**
  * Fetches the UTXOs for a Dogecoin address.
  *
- * @param address - The Dogecoin address to fetch UTXOs for.
+ * @param unspents - The Dogecoin address to fetch UTXOs for.
  * @param value - The value to fetch UTXOs for.
  * @returns A promise that resolves to an array of DogeOrdUnspent objects.
  */

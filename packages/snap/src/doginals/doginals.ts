@@ -7,7 +7,6 @@ import {
 } from './inscribeMethods';
 import { inscribe } from './inscribe';
 import { createWallet, Wallet, APEUTXO } from './makeApezordWallet';
-import { UTXO } from '../doggyfi-apis/interfaces';
 
 const VALID_CONTENT_TYPES = ['text/plain;charset=utf-8', 'image/jpeg'];
 const DRC20_CONTENT_TYPE = 'text/plain;charset=utf-8';
@@ -29,11 +28,10 @@ export async function makeWalletFromDogeOrd(
   if (resp === null) {
     throw new Error('Could not fetch utxos');
   }
-  const unspents: UTXO[] = resp.unspents;
 
   // remap dogeord unspent outputs to UTXOs from makeApezordWallet
   const apeutxos: APEUTXO[] = [];
-  for (const unspent of unspents) {
+  for (const unspent of resp.unspents) {
     const _value = Number(unspent.value);
     if (filterDust && _value <= 100_000) {
       continue; // risk of being an inscription
@@ -54,11 +52,14 @@ export async function makeWalletFromDogeOrd(
 }
 
 /**
- * Inscribe data
+ * Inscribe data.
  *
  * @param privateKey - The private key.
  * @param address - The doge address.
  * @param data - The data to inscribe.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
+ * @returns A promise of a tuple of the serialized transaction and the total fees.
  */
 export async function inscribeData(
   privateKey: string,
@@ -74,7 +75,14 @@ export async function inscribeData(
 
   const dataBuffer = Buffer.from(data, 'utf-8');
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
-  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, dataBuffer, doggyfiFee, doggyfiAddress);
+  const res = inscribe(
+    wallet,
+    address,
+    DRC20_CONTENT_TYPE,
+    dataBuffer,
+    doggyfiFee,
+    doggyfiAddress,
+  );
 
   return [res.serialized, res.totalFees];
 }
@@ -118,7 +126,14 @@ export async function mintDrc20(
 
   // make an apzord wallet
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
-  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
+  const res = inscribe(
+    wallet,
+    address,
+    DRC20_CONTENT_TYPE,
+    data,
+    doggyfiFee,
+    doggyfiAddress,
+  );
 
   return [res.serialized, res.totalFees];
 }
@@ -161,7 +176,14 @@ export async function transferDrc20(
   const data = Buffer.from(argHexData, 'hex');
 
   const wallet = await makeWalletFromDogeOrd(privateKey, fromAddress);
-  const res = inscribe(wallet, fromAddress, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
+  const res = inscribe(
+    wallet,
+    fromAddress,
+    DRC20_CONTENT_TYPE,
+    data,
+    doggyfiFee,
+    doggyfiAddress,
+  );
 
   return [res.serialized, res.totalFees];
 }
@@ -175,6 +197,8 @@ export async function transferDrc20(
  * @param max - The maximum amount to mint.
  * @param lim - The minting limit.
  * @param dec - The number of decimal places.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
  * @returns A promise that resolves to a tuple containing the serialized transaction and the total fees.
  */
 export async function mintDeploy(
@@ -222,7 +246,7 @@ export async function mintDeploy(
     stringDec,
   );
 
-  if (!/^[a-fA-F0-9]*$/.test(argHexData)) {
+  if (!/^[a-fA-F0-9]*$/.test(argHexData)) { // eslint-disable-line
     throw new Error('data must be hex');
   }
   const data = Buffer.from(argHexData, 'hex');
@@ -232,7 +256,14 @@ export async function mintDeploy(
   }
 
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
-  const res = inscribe(wallet, address, DRC20_CONTENT_TYPE, data, doggyfiFee, doggyfiAddress);
+  const res = inscribe(
+    wallet,
+    address,
+    DRC20_CONTENT_TYPE,
+    data,
+    doggyfiFee,
+    doggyfiAddress,
+  );
 
   return [res.serialized, res.totalFees];
 }

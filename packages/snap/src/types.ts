@@ -130,6 +130,7 @@ export function assertIsInscribeData(
   } else {
     throw new Error('params must include valid addressIndex');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -148,7 +149,9 @@ export function assertIsInscribeData(
     throw new Error('params must be instance of `inscribeDataParams`');
   }
 }
-/** Throws if the value passed in isn't of type signPsbtParams.
+
+/**
+ * Throws if the value passed in isn't of type signPsbtParams.
  *
  * @param params - The value to be checked.
  */
@@ -191,6 +194,7 @@ export function assertIsSignPsbtParams(
     }
   }
 }
+
 /**
  * Throws if the value passed in isn't of type pushPsbtParams.
  *
@@ -210,6 +214,7 @@ export function assertIsPushPsbtParams(
     throw new Error('params must be instance of `pushPsbtParams`');
   }
 }
+
 /**
  * Throws if the value passed in isn't of type signMessageParams.
  *
@@ -231,6 +236,7 @@ export function assertIsSignMessageParams(
     throw new Error('params must be instance of `signMessageParams`');
   }
 }
+
 /**
  * Throws if the value passed in isn't of type verifyMessageParams.
  *
@@ -276,6 +282,7 @@ export function assertIsAddressParams(
     throw new Error('params must be instance of `addressParams`');
   }
 }
+
 /**
  * Throws if the value passed in isn't of type MakeTransactionParams.
  *
@@ -296,6 +303,7 @@ export function assertIsMakeTransactionParams(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -310,14 +318,15 @@ export function assertIsMakeTransactionParams(
     )
   ) {
     throw new Error(
-      'params must be instance of `MakeTransactionParams`' +
-        JSON.stringify(params),
+      `params must be instance of \`MakeTransactionParams\` ${JSON.stringify(
+        params,
+      )}`
     );
   }
 }
 
 /**
- * Throws if value passed in isn't of type mintDrc20Parmas
+ * Throws if value passed in isn't of type mintDrc20Parmas.
  *
  * @param params - The value to be checked.
  */
@@ -336,6 +345,7 @@ export function assertIsMintDrc20Params(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -358,7 +368,7 @@ export function assertIsMintDrc20Params(
 }
 
 /**
- * Throws if value passed in isn't of type transferDrc20Parmas
+ * Throws if value passed in isn't of type transferDrc20Parmas.
  *
  * @param params - The value to be checked.
  */
@@ -377,6 +387,7 @@ export function assertIsInscribeTransferDrc20Params(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -399,7 +410,7 @@ export function assertIsInscribeTransferDrc20Params(
 }
 
 /**
- * Throws if value passed in isn't of type SendDrc20Params
+ * Throws if value passed in isn't of type SendDrc20Params.
  *
  * @param params - The value to be checked.
  */
@@ -418,6 +429,7 @@ export function assertIsSendDoginalParams(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -446,7 +458,7 @@ export function assertIsSendDoginalParams(
 }
 
 /**
- * Throws if value passed in isn't of type openDuneTxParams
+ * Throws if value passed in isn't of type openDuneTxParams.
  *
  * @param params - The value to be checked.
  */
@@ -536,9 +548,7 @@ export function assertIsOpenDuneTxParams(
       params.heightStart <= 0
     ) {
       throw new Error(
-        'params must include a valid `heightStart` of type number and greater than 0 but got heightStart ' +
-          params.heightStart +
-          ' <--',
+        `params must include a valid \`heightStart\` of type number and greater than 0 but got heightStart ${params.heightStart} <--`,
       );
     }
 

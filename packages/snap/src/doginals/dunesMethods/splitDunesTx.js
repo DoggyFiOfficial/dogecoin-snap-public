@@ -1,19 +1,18 @@
-// sir-duney & booktoshi approach for splitting dunes
-const dogecore = require('bitcore-lib-doge');
-const { constructScript } = require('./constructScript');
-const { Transaction } = require('bitcore-lib-doge');
-const { Edict } = require('./edict');
-const { fund } = require('./fund');
+import { dogecore, Transaction } from 'bitcore-lib-doge';
+import { constructScript } from './constructScript';
+import { Edict } from './edict';
+import { fund } from './fund';
 
 const parseDuneId = (id, claim = false) => {
   // Check if Dune ID is in the expected format
-  const regex1 = /^\d+\:\d+$/;
-  const regex2 = /^\d+\/\d+$/;
+  const regex1 = /^\d+\:\d+$/; // eslint-disable-line
+  const regex2 = /^\d+\/\d+$/; // eslint-disable-line
 
-  if (!regex1.test(id) && !regex2.test(id))
+  if (!regex1.test(id) && !regex2.test(id)) {
     console.log(
       `Dune ID ${id} is not in the expected format e.g. 1234:1 or 1234/1`,
     );
+  }
 
   // Parse the id string to get height and index
   const [heightStr, indexStr] = regex1.test(id) ? id.split(':') : id.split('/');
@@ -21,12 +20,12 @@ const parseDuneId = (id, claim = false) => {
   const index = parseInt(indexStr, 10);
 
   // Set the bits in the id using bitwise OR
-  let duneId = (BigInt(height) << BigInt(16)) | BigInt(index);
+  let duneId = (BigInt(height) << BigInt(16)) | BigInt(index); // eslint-disable-line no-bitwise
 
   // For minting set CLAIM_BIT
   if (claim) {
-    const CLAIM_BIT = BigInt(1) << BigInt(48);
-    duneId |= CLAIM_BIT;
+    const CLAIM_BIT = BigInt(1) << BigInt(48); // eslint-disable-line no-bitwise
+    duneId |= CLAIM_BIT; // eslint-disable-line no-bitwise
   }
 
   return duneId;
@@ -46,7 +45,7 @@ export const _splitDunesUtxosTx = async (
   }
 
   // Create a new transaction
-  let tx = new Transaction();
+  const tx = new Transaction();
 
   // add all Dunes UTXOs as inputs
   for (const utxo of dunesUtxos) {
@@ -57,12 +56,12 @@ export const _splitDunesUtxosTx = async (
 
   // Add edicts to a mintStone
   // This will add the wrong dunes to the protocol message if dunesBalances contains more than just the dune referenced by the id
-  let edicts = [];
+  const edicts = [];
   for (let i = 0; i < amountsOut.length; i++) {
     // note: we use offset at 2 send dunes going to send start at index 2
     edicts.push(new Edict(duneId, amountsOut[i], i + 2));
   }
-  
+
   // output made at vout 1 to send unallocated dunes to self
   const mintStone = constructScript(null, 1, null, edicts);
   // Add output with OP_RETURN Dune assignment script
@@ -71,11 +70,11 @@ export const _splitDunesUtxosTx = async (
   );
 
   // add rune change to self first.
-  tx.to(wallet.address, 100_000);
+  tx.to(wallet.address, 100000);
 
   // add one output for each address
   for (const address of toAddresses) {
-    tx.to(address, 100_000);
+    tx.to(address, 100000);
   }
 
   // finally add doggyfi fee
@@ -98,7 +97,7 @@ export const _splitDuneTx = async (
   amounts,
   addresses,
   id,
-  dune_utxo,
+  duneUtxo,
   doggyfi,
   doggyfiFeeAddress,
 ) => {
@@ -107,9 +106,9 @@ export const _splitDuneTx = async (
   // Define output offset for receivers of dunes
   const OFFSET = 2;
 
-  let tx = new Transaction();
+  const tx = new Transaction();
 
-  tx.from(dune_utxo);
+  tx.from(duneUtxo);
 
   // parse given id string to dune id
   const duneId = parseDuneId(id);
@@ -129,19 +128,17 @@ export const _splitDuneTx = async (
   const script = constructScript(null, DEFAULT_OUTPUT, null, edicts);
 
   // Add output with OP_RETURN Dune assignment script
-  tx.addOutput(
-    new dogecore.Transaction.Output({ script: script, satoshis: 0 }),
-  );
+  tx.addOutput(new dogecore.Transaction.Output({ script, satoshis: 0 }));
 
   // add one output to the sender for the dunes that are not transferred
-  tx.to(wallet.address, 100_000);
+  tx.to(wallet.address, 100000);
 
   // add doggyfi fee
   tx.to(doggyfiFeeAddress, doggyfi);
 
   // the output after the protocol message will carry the dune balance if no payload is specified
   for (const address of addresses) {
-    tx.to(address, 100_000);
+    tx.to(address, 100000);
   }
 
   // we fund the tx

@@ -1,9 +1,10 @@
 import { UnspentsResponseData } from './interfaces';
 
 /**
- * Fetch the UTXOs for an address
+ * Fetch the UTXOs for an address.
  *
- * @param address The address to fetch the UTXOs for.
+ * @param address - The address to fetch the UTXOs for.
+ * @param cursor - The cursor to fetch the UTXOs from.
  * @returns Response wrapped into a UXTOMapping object.
  */
 export async function fetchUTXOs(
@@ -21,7 +22,7 @@ export async function fetchUTXOs(
     return null;
   }
 
-  let result: UnspentsResponseData = await response.json();
+  const result: UnspentsResponseData = await response.json();
 
   while (result.nextCursor) {
     url = `https://api.doggyfi.xyz/unspents/${address}?cursor=${result.nextCursor}`;

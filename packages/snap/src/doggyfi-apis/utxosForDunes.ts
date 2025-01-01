@@ -4,7 +4,8 @@ import { DuneUtxoResponse } from './interfaces';
 /**
  * Fetch the utxos for a dune.
  *
- * @param dune Either the dune id or the dune name without spaces.
+ * @param dune - Either the dune id or the dune name without spaces.
+ * @param cursor - The cursor to fetch the utxos from.
  * @returns Json object with the utxos for the dune and cursor.
  */
 export async function fetchDuneData(
@@ -23,7 +24,7 @@ export async function fetchDuneData(
     return null;
   }
 
-  let result: DuneUtxoResponse = await response.json();
+  const result: DuneUtxoResponse = await response.json();
 
   while (result.nextCursor) {
     url = `https://api.doggyfi.xyz/dunes/utxo/${dune}?cursor=${result.nextCursor}`;

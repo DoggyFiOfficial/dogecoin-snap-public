@@ -1,14 +1,14 @@
-export interface Inscription {
+export type Inscription = {
   inscription_id: string;
   offset: number;
-}
+};
 
-export interface Dune {
+export type Dune = {
   amount: string;
   dune_id: string;
-}
+};
 
-export interface UTXO {
+export type UTXO = {
   hash: string;
   vout_index: number;
   address: string;
@@ -17,9 +17,9 @@ export interface UTXO {
   dunes: Dune[];
   inscriptions: Inscription[];
   scriptPubKey: string;
-}
+};
 
-export interface DuneUTXO {
+export type DuneUTXO = {
   txid: string;
   vout: number;
   address: string;
@@ -28,54 +28,54 @@ export interface DuneUTXO {
   confirmations: number;
   height: number;
   dune_amount: string;
-}
+};
 
-export interface UnspentsResponseData {
+export type UnspentsResponseData = {
   unspents: UTXO[];
   last_updated: {
     block_hash: string;
     block_height: number;
   };
   nextCursor: string | null;
-}
+};
 
-export interface UTXOMapping {
+export type UTXOMapping = {
   [txid: string]: UTXO;
-}
+};
 
-export interface DuneData {
+export type DuneData = {
   [key: string]: string;
-}
+};
 
-export interface LastUpdated {
+export type LastUpdated = {
   block_hash: string;
   block_height: number;
-}
+};
 
-export interface DuneResponse {
+export type DuneResponse = {
   data: DuneData;
   last_updated: LastUpdated;
-}
+};
 
-export interface DuneUtxoResponse {
+export type DuneUtxoResponse = {
   data: DuneUTXO[];
   last_updated: {
     block_hash: string;
     block_height: number;
   };
   nextCursor: string | null;
-}
+};
 
-export interface DuneTerms {
+export type DuneTerms = {
   mint_txs_cap: number | null;
   amount_per_mint: number | null;
   start_height: number | null;
   end_height: number | null;
   start_offset: number | null;
   end_offset: number | null;
-}
+};
 
-export interface DuneInfo {
+export type DuneInfo = {
   id: string;
   etching_cenotaph: boolean;
   etching_tx: string;
@@ -89,38 +89,38 @@ export interface DuneInfo {
   mints: number;
   unique_holders: number;
   total_utxos: number;
-}
+};
 
-export interface PushTxResponse {
+export type PushTxResponse = {
   txid: string;
-}
+};
 
-export interface ScriptSig {
+export type ScriptSig = {
   asm: string;
   hex: string;
-}
+};
 
-export interface Vin {
+export type Vin = {
   txid: string;
   vout: number;
   scriptSig: ScriptSig;
   sequence: number;
-}
+};
 
-export interface ScriptPubKey {
+export type ScriptPubKey = {
   asm: string;
   hex: string;
   type: string;
   addresses: string[];
-}
+};
 
-export interface Vout {
+export type Vout = {
   value: number;
   n: number;
   scriptPubKey: ScriptPubKey;
-}
+};
 
-export interface TxInfoResponse {
+export type TxInfoResponse = {
   txid: string;
   hex: string;
   size: number;
@@ -131,35 +131,36 @@ export interface TxInfoResponse {
   confirmations: number;
   time: number;
   blocktime: number;
-}
+};
 
-export interface Drc20BalByAddressResponse {
+export type Drc20BalByAddressResponse = {
   data: Drc20BalData;
   last_updated: LastUpdated;
-}
+};
 
-export interface Drc20BalData {
+export type Drc20BalData = {
   [key: string]: Drc20Bal;
-}
+};
 
-export interface Drc20Bal {
+export type Drc20Bal = {
   total: string;
   available: string;
-}
+};
 
-export interface Drc20Terms {
+export type Drc20Terms = {
   maxSupply: number;
   decimals: number;
   lim: number;
-}
-export interface Drc20Info {
+};
+
+export type Drc20Info = {
   deployInscriptionId: string;
   holders: number;
   ticker: string;
   terms: Drc20Terms;
-}
+};
 
-export interface tipResponse {
+export type tipResponse = {
   tip: string;
   tipAddress: string;
-}
+};

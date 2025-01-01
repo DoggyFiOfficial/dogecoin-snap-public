@@ -6,9 +6,9 @@ const { fund } = require('./fund');
 const { constants } = require('./constants');
 
 function minimumAtHeight(height) {
-  const offset = BigInt(height) + 1n;
+  const offset = BigInt(height) + BigInt(1);
 
-  const INTERVAL = constants.SUBSIDY_HALVING_INTERVAL_10X / 12n;
+  const INTERVAL = constants.SUBSIDY_HALVING_INTERVAL_10X / BigInt(12);
 
   const start = constants.FIRST_DUNE_HEIGHT;
   const end = start + constants.SUBSIDY_HALVING_INTERVAL_10X;
@@ -18,14 +18,14 @@ function minimumAtHeight(height) {
   }
 
   if (offset >= end) {
-    return 0n;
+    return BigInt(0);
   }
 
   const progress = offset - start;
 
   const length = BigInt(12 - Math.floor(Number(progress / INTERVAL)));
 
-  const endValue = BigInt(constants.STEPS[length - 1n]);
+  const endValue = BigInt(constants.STEPS[length - BigInt(1)]);
   const startValue = BigInt(constants.STEPS[length]);
 
   const remainder = progress % INTERVAL;
@@ -34,7 +34,7 @@ function minimumAtHeight(height) {
 }
 
 function isSingleEmoji(str) {
-  const emojiRegex = /[\p{Emoji}]/gu;
+  const emojiRegex = /[\p{Emoji}]/gu; // eslint-disable-line
 
   const matches = str.match(emojiRegex);
 

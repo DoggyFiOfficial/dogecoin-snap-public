@@ -1,35 +1,55 @@
-//JS classes from sirduney implementation
-const { varIntEncode } = require('./varIntEncode');
+// JS classes from sirduney implementation
+
+import { varIntEncode } from './varIntEncode';
+
 export class Etching {
   // Constructor for Etching
   constructor(divisibility, terms, turbo, premine, dune, spacers, symbol) {
     this.divisibility = divisibility;
-    this.terms = terms !== undefined ? terms : null;
-    this.turbo = turbo !== undefined ? turbo : null;
-    this.premine = premine !== undefined ? premine : null;
+    this.terms = terms === undefined ? null : terms;
+    this.turbo = turbo === undefined ? null : turbo;
+    this.premine = premine === undefined ? null : premine;
     this.dune = dune;
     this.spacers = spacers;
     this.symbol = symbol;
   }
 }
+
 export class Flag {
-  static Etch = 0;
-  static Terms = 1;
-  static Turbo = 2;
-  static Cenotaph = 127;
+  static get Etch() {
+    return 0;
+  }
+
+  static get Terms() {
+    return 1;
+  }
+
+  static get Turbo() {
+    return 2;
+  }
+
+  static get Cenotaph() {
+    return 127;
+  }
 
   static mask(flag) {
+    // eslint-disable-next-line no-bitwise
     return BigInt(1) << BigInt(flag);
   }
 
   static take(flag, flags) {
     const mask = Flag.mask(flag);
-    const set = (flags & mask) !== 0n;
-    flags &= ~mask;
+    // eslint-disable-next-line no-bitwise
+    const set = (flags & mask) !== BigInt(0);
+    // eslint-disable-next-line no-bitwise
+    flags &= ~mask; // eslint-disable-line no-param-reassign
     return set;
   }
 
   static set(flag, flags) {
+    /* eslint-disable no-bitwise */
+    /* eslint-disable no-param-reassign */
+    /* eslint-disable no-unused-vars */
     flags |= Flag.mask(flag);
   }
 }
@@ -60,25 +80,73 @@ export class PushBytes {
 }
 
 export class Tag {
-  static Body = 0;
-  static Flags = 2;
-  static Dune = 4;
-  static Limit = 6;
-  static OffsetEnd = 8;
-  static Deadline = 10;
-  static Pointer = 12;
-  static HeightStart = 14;
-  static OffsetStart = 16;
-  static HeightEnd = 18;
-  static Cap = 20;
-  static Premine = 22;
+  static get Body() {
+    return 0;
+  }
 
-  static Cenotaph = 254;
+  static get Flags() {
+    return 2;
+  }
 
-  static Divisibility = 1;
-  static Spacers = 3;
-  static Symbol = 5;
-  static Nop = 255;
+  static get Dune() {
+    return 4;
+  }
+
+  static get Limit() {
+    return 6;
+  }
+
+  static get OffsetEnd() {
+    return 8;
+  }
+
+  static get Deadline() {
+    return 10;
+  }
+
+  static get Pointer() {
+    return 12;
+  }
+
+  static get HeightStart() {
+    return 14;
+  }
+
+  static get OffsetStart() {
+    return 16;
+  }
+
+  static get HeightEnd() {
+    return 18;
+  }
+
+  static get Cap() {
+    return 20;
+  }
+
+  static get Premine() {
+    return 22;
+  }
+
+  static get Cenotaph() {
+    return 254;
+  }
+
+  static get Divisibility() {
+    return 1;
+  }
+
+  static get Spacers() {
+    return 3;
+  }
+
+  static get Symbol() {
+    return 5;
+  }
+
+  static get Nop() {
+    return 255;
+  }
 
   static take(tag, fields) {
     return fields[tag];
@@ -86,18 +154,21 @@ export class Tag {
 
   static encode(tag, value, payload) {
     payload.push(varIntEncode(tag));
-    if (tag == Tag.Dune) payload.push(encodeToTuple(value));
-    else payload.push(varIntEncode(value));
+    if (tag === Tag.Dune) {
+      payload.push(encodeToTuple(value));
+    } else {
+      payload.push(varIntEncode(value));
+    }
   }
 }
 export class Terms {
   constructor(limit, cap, offsetStart, offsetEnd, heightStart, heightEnd) {
-    this.limit = limit !== undefined ? limit : null;
-    this.cap = cap !== undefined ? cap : null;
-    this.offsetStart = offsetStart !== undefined ? offsetStart : null;
-    this.offsetEnd = offsetEnd !== undefined ? offsetEnd : null;
-    this.heightStart = heightStart !== undefined ? heightStart : null;
-    this.heightEnd = heightEnd !== undefined ? heightEnd : null;
+    this.limit = limit === undefined ? null : limit;
+    this.cap = cap === undefined ? null : cap;
+    this.offsetStart = offsetStart === undefined ? null : offsetStart;
+    this.offsetEnd = offsetEnd === undefined ? null : offsetEnd;
+    this.heightStart = heightStart === undefined ? null : heightStart;
+    this.heightEnd = heightEnd === undefined ? null : heightEnd;
   }
 }
 class Dune {
@@ -112,6 +183,12 @@ export class SpacedDune {
   }
 }
 
+/**
+ * Parses a string into a SpacedDune object.
+ *
+ * @param {*} s - String to be parsed.
+ * @returns {Dune} A SpacedDune object.
+ */
 function parseDuneFromString(s) {
   let x = BigInt(0);
 
@@ -134,14 +211,20 @@ function parseDuneFromString(s) {
   return new Dune(x);
 }
 
+/**
+ * Encodes a number to a tuple representation.
+ *
+ * @param {bigint} n - The number to encode.
+ * @returns {number[]} The tuple representation of the number.
+ */
 function encodeToTuple(n) {
   const tupleRepresentation = [];
-  tupleRepresentation.push(Number(n & BigInt(0b0111_1111)));
+  tupleRepresentation.push(Number(n & BigInt('0b0111_1111')));
 
-  while (n > BigInt(0b0111_1111)) {
+  while (n > BigInt('0b0111_1111')) {
     n = n / BigInt(128) - BigInt(1);
     tupleRepresentation.unshift(
-      Number((n & BigInt(0b0111_1111)) | BigInt(0b1000_0000)),
+      Number((n & BigInt('0b0111_1111')) | BigInt('0b1000_0000')),
     );
   }
 

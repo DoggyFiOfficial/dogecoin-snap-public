@@ -4,7 +4,7 @@ import { DuneResponse } from './interfaces';
 /**
  * Fetch the dunes by address.
  *
- * @param address The address to fetch the dunes for.
+ * @param address - The address to fetch the dunes for.
  * @returns Json object with the dunes and cursor.
  */
 export async function fetchDunesByAddress(

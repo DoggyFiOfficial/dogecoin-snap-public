@@ -1,37 +1,62 @@
-// Inscription functions for Doginals, forked over from apezord's original doginals implementation
-const dogecore = require('bitcore-lib-doge');
-const { PrivateKey, Address, Transaction, Script, Opcode } = dogecore;
+import dogecore from 'bitcore-lib-doge';
+
+const { PrivateKey, Transaction, Script, Opcode } = dogecore;
 const { Hash, Signature } = dogecore.crypto;
 
 const MAX_CHUNK_LEN = 240;
 const MAX_PAYLOAD_LEN = 1500;
 
+/**
+ * Converts a buffer to a chunk.
+ *
+ * @param {*} b - Buffer.
+ * @param {*} type - Type.
+ * @returns {*} Chunk.
+ */
 function bufferToChunk(b, type) {
-  b = Buffer.from(b, type);
+  b = Buffer.from(b, type); // eslint-disable-line
   return {
     buf: b.length ? b : undefined,
     len: b.length,
-    opcodenum: b.length <= 75 ? b.length : b.length <= 255 ? 76 : 77,
+    opcodenum: b.length <= 75 ? b.length : b.length <= 255 ? 76 : 77, // eslint-disable-line
   };
 }
 
+/**
+ * Converts a number to a chunk.
+ *
+ * @param {*} n - The number to convert.
+ * @returns {*} The chunk.
+ */
 function numberToChunk(n) {
   return {
     buf:
-      n <= 16
+      n <= 16 // eslint-disable-line
         ? undefined
         : n < 128
         ? Buffer.from([n])
         : Buffer.from([n % 256, n / 256]),
-    len: n <= 16 ? 0 : n < 128 ? 1 : 2,
-    opcodenum: n == 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2,
+    len: n <= 16 ? 0 : n < 128 ? 1 : 2, // eslint-disable-line
+    opcodenum: n == 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2, // eslint-disable-line
   };
 }
 
+/**
+ * Converts an opcode to a chunk.
+ *
+ * @param {*} op - The opcode to convert.
+ * @returns {*} The chunk.
+ */
 function opcodeToChunk(op) {
   return { opcodenum: op };
 }
 
+/**
+ * Funds a transaction.
+ *
+ * @param {*} wallet - An Apezord wallet.
+ * @param {*} tx - The transaction to fund.
+ */
 function fund(wallet, tx) {
   tx.change(wallet.address);
   delete tx._fee;
@@ -56,12 +81,18 @@ function fund(wallet, tx) {
   }
 }
 
+/**
+ * Updates the wallet with the transaction.
+ *
+ * @param {*} wallet - An Apezord wallet.
+ * @param {*} tx - The transaction to update the wallet with.
+ */
 function updateWallet(wallet, tx) {
   wallet.utxos = wallet.utxos.filter((utxo) => {
     for (const input of tx.inputs) {
       if (
-        input.prevTxId.toString('hex') == utxo.txid &&
-        input.outputIndex == utxo.vout
+        input.prevTxId.toString('hex') === utxo.txid &&
+        input.outputIndex === utxo.vout
       ) {
         return false;
       }
@@ -70,7 +101,7 @@ function updateWallet(wallet, tx) {
   });
 
   tx.outputs.forEach((output, vout) => {
-    if (output.script.toAddress().toString() == wallet.address) {
+    if (output.script.toAddress().toString() === wallet.address) {
       wallet.utxos.push({
         txid: tx.hash,
         vout,
@@ -81,22 +112,38 @@ function updateWallet(wallet, tx) {
   });
 }
 
-// modified to take privateKey (base58 buffer) and publicKey (hex string) as arguments
-// drops wallet.json updates from original implementation
-export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfiFeeAddress) {
-  let txs = [];
+/**
+ * Inscribes data.
+ *
+ * @param {*} wallet - An Apezord wallet.
+ * @param {*} address - The address to inscribe the data to.
+ * @param {*} contentType - The content type of the data.
+ * @param {*} data - The data to inscribe.
+ * @param {*} doggyfiFee - The doggyfi fee.
+ * @param {*} doggyfiFeeAddress - The doggyfi fee address.
+ * @returns {*} The serialized transactions and the total fees.
+ */
+export function inscribe(
+  wallet,
+  address,
+  contentType,
+  data,
+  doggyfiFee,
+  doggyfiFeeAddress,
+) {
+  const txs = [];
 
-  let privateKey = new PrivateKey(wallet.privkey);
-  let publicKey = privateKey.toPublicKey();
+  const privateKey = new PrivateKey(wallet.privkey);
+  const publicKey = privateKey.toPublicKey();
 
-  let parts = [];
+  const parts = [];
   while (data.length) {
-    let part = data.slice(0, Math.min(MAX_CHUNK_LEN, data.length));
-    data = data.slice(part.length);
+    const part = data.slice(0, Math.min(MAX_CHUNK_LEN, data.length));
+    data = data.slice(part.length); // eslint-disable-line
     parts.push(part);
   }
 
-  let inscription = new Script();
+  const inscription = new Script();
   inscription.chunks.push(bufferToChunk('ord'));
   inscription.chunks.push(numberToChunk(parts.length));
   inscription.chunks.push(bufferToChunk(contentType));
@@ -110,9 +157,9 @@ export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfi
   let lastPartial;
 
   while (inscription.chunks.length) {
-    let partial = new Script();
+    const partial = new Script();
 
-    if (txs.length == 0) {
+    if (txs.length === 0) {
       partial.chunks.push(inscription.chunks.shift());
     }
 
@@ -129,7 +176,7 @@ export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfi
       inscription.chunks.unshift(partial.chunks.pop());
     }
 
-    let lock = new Script();
+    const lock = new Script();
     lock.chunks.push(bufferToChunk(publicKey.toBuffer()));
     lock.chunks.push(opcodeToChunk(Opcode.OP_CHECKSIGVERIFY));
     partial.chunks.forEach(() => {
@@ -137,37 +184,39 @@ export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfi
     });
     lock.chunks.push(opcodeToChunk(Opcode.OP_TRUE));
 
-    let lockhash = Hash.ripemd160(Hash.sha256(lock.toBuffer()));
+    const lockhash = Hash.ripemd160(Hash.sha256(lock.toBuffer()));
 
-    let p2sh = new Script();
+    const p2sh = new Script();
     p2sh.chunks.push(opcodeToChunk(Opcode.OP_HASH160));
     p2sh.chunks.push(bufferToChunk(lockhash));
     p2sh.chunks.push(opcodeToChunk(Opcode.OP_EQUAL));
 
-    let p2shOutput = new Transaction.Output({
+    const p2shOutput = new Transaction.Output({
       script: p2sh,
       satoshis: 100000,
     });
 
-    let tx = new Transaction();
-    if (p2shInput) tx.addInput(p2shInput);
+    const tx = new Transaction();
+    if (p2shInput) {
+      tx.addInput(p2shInput);
+    }
     tx.addOutput(p2shOutput);
     fund(wallet, tx);
 
     if (p2shInput) {
-      let signature = Transaction.sighash.sign(
+      const signature = Transaction.sighash.sign(
         tx,
         privateKey,
         Signature.SIGHASH_ALL,
         0,
         lastLock,
       );
-      let txsignature = Buffer.concat([
+      const txsignature = Buffer.concat([
         signature.toBuffer(),
         Buffer.from([Signature.SIGHASH_ALL]),
       ]);
 
-      let unlock = new Script();
+      const unlock = new Script();
       unlock.chunks = unlock.chunks.concat(lastPartial.chunks);
       unlock.chunks.push(bufferToChunk(txsignature));
       unlock.chunks.push(bufferToChunk(lastLock.toBuffer()));
@@ -184,32 +233,37 @@ export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfi
       script: '',
     });
 
-    p2shInput.clearSignatures = () => {};
-    p2shInput.getSignatures = () => {};
+    p2shInput.clearSignatures = () => {
+      // Intentionally left blank as no operation is needed
+    };
+
+    p2shInput.getSignatures = () => {
+      // Intentionally left blank as no operation is needed
+    };
 
     lastLock = lock;
     lastPartial = partial;
   }
 
-  let tx = new Transaction();
+  const tx = new Transaction();
   tx.addInput(p2shInput);
   tx.to(address, 100000);
   tx.to(doggyfiFeeAddress, doggyfiFee); // doggyfi fee for api costs
   fund(wallet, tx);
 
-  let signature = Transaction.sighash.sign(
+  const signature = Transaction.sighash.sign(
     tx,
     privateKey,
     Signature.SIGHASH_ALL,
     0,
     lastLock,
   );
-  let txsignature = Buffer.concat([
+  const txsignature = Buffer.concat([
     signature.toBuffer(),
     Buffer.from([Signature.SIGHASH_ALL]),
   ]);
 
-  let unlock = new Script();
+  const unlock = new Script();
   unlock.chunks = unlock.chunks.concat(lastPartial.chunks);
   unlock.chunks.push(bufferToChunk(txsignature));
   unlock.chunks.push(bufferToChunk(lastLock.toBuffer()));
@@ -218,14 +272,14 @@ export function inscribe(wallet, address, contentType, data, doggyfiFee, doggyfi
   updateWallet(wallet, tx);
   txs.push(tx);
 
-  let serialized = [];
-  txs.forEach((tx) => {
-    serialized.push(tx.uncheckedSerialize());
+  const serialized = [];
+  txs.forEach((_tx) => {
+    serialized.push(_tx.uncheckedSerialize());
   });
 
   let totalFees = 0;
-  txs.forEach((tx) => {
-    totalFees += tx.inputAmount - tx.outputAmount;
+  txs.forEach((_tx) => {
+    totalFees += _tx.inputAmount - _tx.outputAmount;
   });
 
   return { serialized, totalFees };

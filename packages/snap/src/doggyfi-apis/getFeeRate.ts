@@ -1,5 +1,10 @@
 // gets estimated fee rate from doggyfi-api
 
+/**
+ * Gets the fee rate.
+ *
+ * @returns Estimated fee rate.
+ */
 export async function getFeeRate(): Promise<number | null> {
   const url = `https://api.doggyfi.xyz/feeRate`;
 
@@ -10,7 +15,7 @@ export async function getFeeRate(): Promise<number | null> {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const result: number = await response.json().then(r => r.feeRate);
+    const result: number = await response.json().then((r) => r.feeRate);
 
     return result;
   } catch (error) {

@@ -6,6 +6,7 @@
   "workspaces": [
     "packages/*"
   ],
+  "type": "module",
   "scripts": {
     "build": "bun run --cwd packages/snap build",
     "format": "prettier --write 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' && eslint 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' --fix",

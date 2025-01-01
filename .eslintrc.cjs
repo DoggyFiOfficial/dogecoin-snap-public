@@ -8,7 +8,6 @@ module.exports = {
   extends: ['@metamask/eslint-config'],
 
   plugins: ['import'],
-  
   overrides: [
     {
       files: ['**/*.js'],
@@ -36,8 +35,8 @@ module.exports = {
   ],
 
   ignorePatterns: [
-    '!.prettierrc.js',
-    '**/!.eslintrc.js',
+    '!.prettierrc.cjs',
+    '**/!.eslintrc.cjs',
     '**/dist*/',
     '**/*__GENERATED__*',
     '**/build',
