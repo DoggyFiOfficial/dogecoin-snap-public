@@ -1,7 +1,9 @@
-import { dogecore, Transaction } from 'bitcore-lib-doge';
+import dogecore from 'bitcore-lib-doge';
 import { constructScript } from './constructScript';
 import { Edict } from './edict';
 import { fund } from './fund';
+
+const { Transaction } = dogecore;
 
 const parseDuneId = (id, claim = false) => {
   // Check if Dune ID is in the expected format

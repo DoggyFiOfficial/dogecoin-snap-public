@@ -1,0 +1,15 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+      "module": "esnext",
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "jsx": "preserve",
+      "paths": {
+        "bitcore-lib-doge": ["./global.d.ts"]
+      }
+    },
+    "include": ["src", "global.d.ts"],
+  }
+  

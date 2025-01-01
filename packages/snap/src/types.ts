@@ -82,7 +82,7 @@ export type openDuneTxParams = {
 export type sendDuneParams = {
   addressIndex: number;
   toAddress: string;
-  amount: number;
+  amount: string;
   dune: string;
 };
 export type splitDuneTxParams = {
@@ -159,39 +159,37 @@ export function assertIsSignPsbtParams(
   params: unknown,
 ): asserts params is signPsbtParams {
   if (
-    !(
-      typeof params === 'object' &&
-      params !== null &&
-      'addressIndex' in params &&
-      typeof params.addressIndex === 'number' &&
-      'psbtHexString' in params &&
-      typeof params.psbtHexString === 'string'
-    )
+    typeof params === 'object' &&
+    params !== null &&
+    'addressIndex' in params &&
+    typeof params.addressIndex === 'number' &&
+    'psbtHexString' in params &&
+    typeof params.psbtHexString === 'string'
   ) {
-    throw new Error('params must be instance of `signPsbtParams`');
-  } else {
     // if signIndicies is provided, provide flag to check it is an array of non-negative integers
-    if ('signIndices' in params &&
-       params.signIndices !== null) {
+    if ('signIndices' in params && params.signIndices !== null) {
       if (!Array.isArray(params.signIndices)) {
         throw new Error('signIndices must be an array of integers');
       }
+
       for (const i of params.signIndices) {
         if (typeof i !== 'number') {
           throw new Error(
-            'signIndices must be an array of non-negative integers'
+            'signIndices must be an array of non-negative integers',
           );
         } else if (i < 0) {
           throw new Error(
-            'signIndices must be an array of non-negative integers'
+            'signIndices must be an array of non-negative integers',
           );
         } else if (Number.isInteger(i)) {
           throw new Error(
-            'signIndices must be an array of non-negative integers'
+            'signIndices must be an array of non-negative integers',
           );
         }
       }
     }
+  } else {
+    throw new Error('params must be instance of `signPsbtParams`');
   }
 }
 
@@ -320,7 +318,7 @@ export function assertIsMakeTransactionParams(
     throw new Error(
       `params must be instance of \`MakeTransactionParams\` ${JSON.stringify(
         params,
-      )}`
+      )}`,
     );
   }
 }
@@ -568,18 +566,17 @@ export function assertIsOpenDuneTxParams(
         );
       }
     }
-  } else {
+  } else if (
+    // if you get here means heightStart is not provided
+    'heightEnd' in params &&
+    params.heightEnd !== null &&
+    params.heightEnd !== undefined &&
+    params.heightEnd !== ''
+  ) {
     // if heightEnd is provided but heightStart is not, throw error
-    if (
-      'heightEnd' in params &&
-      params.heightEnd !== null &&
-      params.heightEnd !== undefined &&
-      params.heightEnd !== ''
-    ) {
-      throw new Error(
-        'params must include a valid `heightEnd` of type number and greater than 0',
-      );
-    }
+    throw new Error(
+      'params must include a valid `heightEnd` of type number and greater than 0',
+    );
   }
 
   // offsetStart and offsetEnd are optional
@@ -608,18 +605,17 @@ export function assertIsOpenDuneTxParams(
         'params must include a valid `offsetEnd` of type number and greater than or equal to 0',
       );
     }
-  } else {
+  } else if (
+    // if you get here means offsetStart is not provided
+    'offsetEnd' in params &&
+    params.offsetEnd !== null &&
+    params.offsetEnd !== undefined &&
+    params.offsetEnd !== ''
+  ) {
     // if offsetEnd is provided but offsetStart is not, throw error
-    if (
-      'offsetEnd' in params &&
-      params.offsetEnd !== null &&
-      params.offsetEnd !== undefined &&
-      params.offsetEnd !== ''
-    ) {
-      throw new Error(
-        'params must include a valid `offsetEnd` of type number and greater than or equal to 0',
-      );
-    }
+    throw new Error(
+      'params must include a valid `offsetEnd` of type number and greater than or equal to 0',
+    );
   }
 
   if (
@@ -642,7 +638,7 @@ export function assertIsOpenDuneTxParams(
 }
 
 /**
- * Throws if value passed in isn't of type sendDuneParams
+ * Throws if value passed in isn't of type sendDuneParams.
  *
  * @param params - The value to be checked.
  */
@@ -686,7 +682,7 @@ export function assertIsSendDuneParams(
 }
 
 /**
- * Throws if value passed in isn't of type splitDuneTxParams
+ * Throws if value passed in isn't of type splitDuneTxParams.
  *
  * @param params - The value to be checked.
  */
@@ -705,6 +701,7 @@ export function assertIsSplitDuneTxParams(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -796,9 +793,9 @@ export function assertIsMintDuneTxParams(
  *
  * @param params - The parameters to check, expected to be an object containing either 'duneId' or 'duneName'.
  * @throws {Error}
- *   - If `params` is not an object.
- *   - If neither `duneId` nor `duneName` is provided.
- *   - If `params` does not contain either `duneId` or `duneName`.
+ * If `params` is not an object.
+ * If neither `duneId` nor `duneName` is provided.
+ * If `params` does not contain either `duneId` or `duneName`.
  */
 export function assertIsGetDuneMetadataParams(
   params: unknown,
@@ -814,6 +811,7 @@ export function assertIsGetDuneMetadataParams(
       throw new Error('Must provide either duneId or duneName');
     }
     // check type of duneId and duneName are string
+
     if (
       typeof paramsObj.duneId !== 'string' ||
       typeof paramsObj.duneName !== 'string'
@@ -825,6 +823,7 @@ export function assertIsGetDuneMetadataParams(
       throw new Error('Must provide duneId or duneName');
     }
     // check type of duneId is string
+
     if (typeof paramsObj.duneId !== 'string') {
       throw new Error('If only provinding duneId, duneId must be a string');
     }
@@ -833,6 +832,7 @@ export function assertIsGetDuneMetadataParams(
       throw new Error('Must provide duneName or duneId');
     }
     // check type of duneName is string
+
     if (typeof paramsObj.duneName !== 'string') {
       throw new Error('If only provinding duneName, duneName must be a string');
     }
@@ -861,6 +861,7 @@ export function assertIsSendDrc20Params(
   } else {
     throw new Error('params must be instance of `MakeTransactionParams`');
   }
+
   if (
     !(
       typeof params === 'object' &&
@@ -891,7 +892,7 @@ export function assertIsSendDrc20Params(
 }
 
 /**
- * Throws if value passed in isn't of type deployDrc20Parmas
+ * Throws if value passed in isn't of type deployDrc20Parmas.
  *
  * @param params - The value to be checked.
  */
@@ -964,7 +965,7 @@ export function assertIsDeployDrc20Params(
 }
 
 /**
- * Throws if value passed in isn't of type Drc20InfoParams
+ * Throws if value passed in isn't of type Drc20InfoParams.
  *
  * @param params - The value to be checked.
  */

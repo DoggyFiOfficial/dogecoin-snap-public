@@ -1,8 +1,10 @@
 module.exports = {
   root: true,
+  parser: "@typescript-eslint/parser",
   parserOptions: {
     ecmaVersion: 2020, // Allows for the parsing of modern ECMAScript features
     sourceType: 'module',
+    project: "./tsconfig.json"
   },
 
   extends: ['@metamask/eslint-config'],
@@ -36,6 +38,7 @@ module.exports = {
 
   ignorePatterns: [
     '!.prettierrc.cjs',
+    '.eslintrc.cjs',
     '**/!.eslintrc.cjs',
     '**/dist*/',
     '**/*__GENERATED__*',

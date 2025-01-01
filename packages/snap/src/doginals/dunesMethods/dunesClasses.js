@@ -1,5 +1,4 @@
 // JS classes from sirduney implementation
-
 import { varIntEncode } from './varIntEncode';
 
 export class Etching {
@@ -219,12 +218,13 @@ function parseDuneFromString(s) {
  */
 function encodeToTuple(n) {
   const tupleRepresentation = [];
-  tupleRepresentation.push(Number(n & BigInt('0b0111_1111')));
 
-  while (n > BigInt('0b0111_1111')) {
+  tupleRepresentation.push(Number(n & BigInt(0b0111_1111)));
+
+  while (n > BigInt(0b0111_1111)) {
     n = n / BigInt(128) - BigInt(1);
     tupleRepresentation.unshift(
-      Number((n & BigInt('0b0111_1111')) | BigInt('0b1000_0000')),
+      Number((n & BigInt(0b0111_1111)) | BigInt(0b1000_0000)),
     );
   }
 

@@ -1,5 +1,7 @@
-import { Transaction } from 'bitcore-lib-doge';
+import dogecore from 'bitcore-lib-doge';
 import { fund } from './fund';
+
+const { Transaction } = dogecore;
 
 /**
  * Makes a tx to send an exact dune to a given address.

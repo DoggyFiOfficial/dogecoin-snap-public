@@ -27,7 +27,8 @@
     "bitcoinjs-lib": "^5.2.0",
     "buffer": "^6.0.3",
     "coininfo": "^5.2.1",
-    "dotenv": "^16.1.4"
+    "dotenv": "^16.1.4",
+    "zod": "1.1.42"
   },
   "devDependencies": {
     "@metamask/snaps-cli": "0.38.4-flask.1",

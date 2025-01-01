@@ -306,7 +306,7 @@ export const sendDune = async ({
 }: {
   addressIndex: number;
   toAddress: string;
-  amount: number;
+  amount: string;
   dune: string;
 }) => {
   return snapRpcRequest({
@@ -394,7 +394,7 @@ export const openDune = async ({
  * Invoke the "doge_mintDune" RPC method from the snap.
  *
  * @param params - The transaction parameters.
- * @param params.toAddress - The address to send the dune to.
+ * @param params.addressIndex - The address index.
  * @param params.id - The id of the dune.
  * @param params.amount - The amount of the dune.
  * @param params.receiver - The receiver of the dune.
@@ -402,13 +402,11 @@ export const openDune = async ({
  */
 export const mintDune = async ({
   addressIndex,
-  toAddress,
   id,
   amount,
   receiver,
 }: {
   addressIndex: number;
-  toAddress: string;
   id: string;
   amount: string;
   receiver: string;
@@ -417,7 +415,6 @@ export const mintDune = async ({
     snapRpcMethod: 'mintDune',
     params: {
       addressIndex,
-      toAddress,
       id,
       amount,
       receiver,

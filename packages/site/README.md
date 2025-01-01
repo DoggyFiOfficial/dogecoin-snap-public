@@ -12,3 +12,4 @@ This is the companion to the DoggyFi Dogecoin Dapp. It allows you to:
 - See your Dunes balance
 - Send your Dunes to another address
 - Deploy, Mint, Transfer DRC-20 to another address
+- Deploy, Mint, Transfer Dunes to another address
