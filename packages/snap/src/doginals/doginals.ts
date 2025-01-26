@@ -56,7 +56,8 @@ export async function makeWalletFromDogeOrd(
  *
  * @param privateKey - The private key.
  * @param address - The doge address.
- * @param data - The data to inscribe.
+ * @param data - The data to inscribe, as a hex string
+ * @param contentType - The content type of the data (e.g., plain/text).
  * @param doggyfiFee - The doggyfi fee.
  * @param doggyfiAddress - The doggyfi address.
  * @returns A promise of a tuple of the serialized transaction and the total fees.
@@ -65,20 +66,16 @@ export async function inscribeData(
   privateKey: string,
   address: string,
   data: string,
+  contentType: string,
   doggyfiFee: number,
   doggyfiAddress: string,
 ): Promise<[string[], number]> {
-  // check contentType is valid
-  if (!VALID_CONTENT_TYPES.includes(DRC20_CONTENT_TYPE)) {
-    throw new Error('invalid content type');
-  }
-
-  const dataBuffer = Buffer.from(data, 'utf-8');
+  const dataBuffer = Buffer.from(data, 'hex');
   const wallet = await makeWalletFromDogeOrd(privateKey, address);
   const res = inscribe(
     wallet,
     address,
-    DRC20_CONTENT_TYPE,
+    contentType,
     dataBuffer,
     doggyfiFee,
     doggyfiAddress,
@@ -246,7 +243,8 @@ export async function mintDeploy(
     stringDec,
   );
 
-  if (!/^[a-fA-F0-9]*$/.test(argHexData)) { // eslint-disable-line
+  if (!/^[a-fA-F0-9]*$/.test(argHexData)) {
+    // eslint-disable-line
     throw new Error('data must be hex');
   }
   const data = Buffer.from(argHexData, 'hex');

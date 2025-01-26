@@ -175,6 +175,7 @@ export const inscribeData = async (
     privkey,
     myAddress,
     params.data,
+    params.contentType,
     Number(doggyfiFee.tip),
     doggyfiFee.tipAddress,
   );
@@ -763,21 +764,21 @@ export async function sendDune(params: sendDuneParams) {
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  console.log("Got account");
+  console.log('Got account');
 
   const myAddress = await getAddress({ addressIndex: params.addressIndex });
-  console.log("Got my address");
+  console.log('Got my address');
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
-  console.log("Got privkey");
+  console.log('Got privkey');
   const wallet = await makeWalletFromDogeOrd(privkey, myAddress, false);
-  console.log("Made wallet");
+  console.log('Made wallet');
 
   // get doggyfi-api tip
   const tip = await getTipRate();
   if (tip === null) {
     throw new Error('Could not fetch tip rate');
   }
-  console.log("Got tip");
+  console.log('Got tip');
 
   const [tx, fees] = await sendDuneTx(
     wallet,
@@ -787,7 +788,7 @@ export async function sendDune(params: sendDuneParams) {
     Number(tip.tip),
     tip.tipAddress,
   );
-  console.log("Made Send Dune Tx"); 
+  console.log('Made Send Dune Tx');
 
   // ask user to confirm fee
   const confirmationResponse2 = await snap.request({

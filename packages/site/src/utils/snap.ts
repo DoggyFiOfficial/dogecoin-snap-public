@@ -78,6 +78,38 @@ const snapRpcRequest = async <M extends keyof RpcMethodTypes>(
 };
 
 /**
+ * Invoke the 'doge_inscribeData' RPC method from the snap.
+ *
+ * @param params - The parameters for the inscribeData method.
+ * @param params.addressIndex - The index of the account to derive on 44'/3'/0/0/n.
+ * @param params.toAddress - The address to which the data will be inscribed.
+ * @param params.data - The data to be inscribed.
+ * @param params.contentType - The MIME type of the data being inscribed.
+ * @returns A promise that resolves with the result of the RPC method call.
+ */
+export const inscribeData = async ({
+  addressIndex,
+  toAddress,
+  data,
+  contentType,
+}: {
+  addressIndex: string;
+  toAddress: string;
+  data: string;
+  contentType: string;
+}) => {
+  return snapRpcRequest({
+    snapRpcMethod: 'inscribeData',
+    params: {
+      addressIndex: Number(addressIndex),
+      toAddress,
+      data,
+      contentType,
+    },
+  });
+};
+
+/**
  * Invoke the "doge_getAddress" RPC method from the snap.
  *
  * @params - The address parameters.

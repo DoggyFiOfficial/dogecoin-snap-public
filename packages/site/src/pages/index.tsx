@@ -28,6 +28,7 @@ import {
   useMintDunes,
   useSplitDunes,
 } from '../hooks/useDunes';
+import { useInscribeData } from '../hooks/useInscribeData';
 
 const Container = styled.div`
   display: flex;
@@ -88,12 +89,6 @@ const Index = () => {
   const [BALANCE, setBalance] = useState(0);
   const [ADDRESSINDEX, setAddressIndex] = useState(0);
 
-  useEffect(() => {
-    if (state.installedSnap) {
-      fetchAddressAndBalance(ADDRESSINDEX);
-    }
-  }, [state.installedSnap, ADDRESSINDEX]);
-
   const fetchAddressAndBalance = async (index: number) => {
     try {
       const newAddress = await getAddress(index);
@@ -105,6 +100,12 @@ const Index = () => {
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
+
+  useEffect(() => {
+    if (state.installedSnap) {
+      fetchAddressAndBalance(ADDRESSINDEX);
+    }
+  }, [state.installedSnap, ADDRESSINDEX]);
 
   const handleConnectClick = async () => {
     try {
@@ -155,6 +156,13 @@ const Index = () => {
     lastTxId: lastTxIdSendDoginal,
     _sendDoginal,
   } = useSendDoginals();
+
+  const {
+    error: txErrorInscribeData,
+    isLoading: isTxLoadingInscribeData,
+    lastTxId: lastTxIdInscribeData,
+    _inscribeData,
+  } = useInscribeData();
 
   const {
     error: txErrorSendDRC20,
@@ -252,6 +260,16 @@ const Index = () => {
     const formData = new FormData(form);
     formData.append('addressIndex', String(ADDRESSINDEX));
     _sendDoginal(formData);
+  };
+
+  const handleInscribeData: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _inscribeData(formData);
   };
 
   const handleSendDRC20: React.FormEventHandler<HTMLFormElement> = async (
@@ -1046,6 +1064,62 @@ const Index = () => {
                   )}
                   {txErrorSendDRC20 && (
                     <ErrorMessage>{txErrorSendDRC20}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Inscribe Data',
+              description: (
+                <>
+                  <form onSubmit={handleInscribeData}>
+                    <p>
+                      <input
+                        type="string"
+                        name="toAddress"
+                        placeholder="Destination Address"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="data"
+                        placeholder="data to inscribe as a hex string"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="contentType"
+                        placeholder="ContentType of the data (must be valid ordinal content type)"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingInscribeData} type="submit">
+                      Inscribe Data
+                    </button>
+                  </form>
+                  {lastTxIdInscribeData && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdInscribeData}`}
+                      >
+                        {lastTxIdInscribeData}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorInscribeData && (
+                    <ErrorMessage>{txErrorInscribeData}</ErrorMessage>
                   )}
                 </>
               ),
