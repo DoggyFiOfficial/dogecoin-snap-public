@@ -733,7 +733,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDune}`}
                       >
                         {lastTxIdSendDune}
                       </a>
@@ -789,7 +789,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdMintDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdMintDune}`}
                       >
                         {lastTxIdMintDune}
                       </a>
@@ -917,7 +917,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdOpenDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdOpenDune}`}
                       >
                         {lastTxIdOpenDune}
                       </a>
@@ -973,7 +973,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDune}`}
                       >
                         {lastTxIdSendDune}
                       </a>
@@ -1093,7 +1093,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdInscribeData}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdInscribeData}`}
                       >
                         {lastTxIdInscribeData}
                       </a>
