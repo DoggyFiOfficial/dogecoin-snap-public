@@ -22,12 +22,8 @@ import {
   useMintTransferDRC20,
   useSendDRC20,
 } from '../hooks/useDRC20';
-import {
-  useSendDune,
-  useOpenDune,
-  useMintDunes,
-  useSplitDunes,
-} from '../hooks/useDunes';
+import { useSendDune, useOpenDune, useMintDunes } from '../hooks/useDunes';
+import { useInscribeData } from '../hooks/useInscribeData';
 
 const Container = styled.div`
   display: flex;
@@ -88,12 +84,6 @@ const Index = () => {
   const [BALANCE, setBalance] = useState(0);
   const [ADDRESSINDEX, setAddressIndex] = useState(0);
 
-  useEffect(() => {
-    if (state.installedSnap) {
-      fetchAddressAndBalance(ADDRESSINDEX);
-    }
-  }, [state.installedSnap, ADDRESSINDEX]);
-
   const fetchAddressAndBalance = async (index: number) => {
     try {
       const newAddress = await getAddress(index);
@@ -105,6 +95,12 @@ const Index = () => {
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
+
+  useEffect(() => {
+    if (state.installedSnap) {
+      fetchAddressAndBalance(ADDRESSINDEX);
+    }
+  }, [state.installedSnap, ADDRESSINDEX]);
 
   const handleConnectClick = async () => {
     try {
@@ -157,6 +153,13 @@ const Index = () => {
   } = useSendDoginals();
 
   const {
+    error: txErrorInscribeData,
+    isLoading: isTxLoadingInscribeData,
+    lastTxId: lastTxIdInscribeData,
+    _inscribeData,
+  } = useInscribeData();
+
+  const {
     error: txErrorSendDRC20,
     isLoading: isTxLoadingSendDRC20,
     lastTxId: lastTxIdSendDRC20,
@@ -184,20 +187,16 @@ const Index = () => {
     _mintDune,
   } = useMintDunes();
 
-  const {
-    error: txErrorSplitDunes,
-    isLoading: isTxLoadingSplitDunes,
-    lastTxId: lastTxIdSplitDunes,
-    _splitDunes,
-  } = useSplitDunes();
-
   const handleSwitchAccount: React.FormEventHandler<HTMLFormElement> = async (
     event,
   ) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    let addressIndex = Number.parseInt(String(formData.get('addressIndex')));
+    const addressIndex = Number.parseInt(
+      String(formData.get('addressIndex')),
+      10,
+    );
     if (addressIndex < 0) {
       throw new Error('Address index MUST be an integer >= 0');
     }
@@ -254,6 +253,16 @@ const Index = () => {
     _sendDoginal(formData);
   };
 
+  const handleInscribeData: React.FormEventHandler<HTMLFormElement> = async (
+    event,
+  ) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    formData.append('addressIndex', String(ADDRESSINDEX));
+    _inscribeData(formData);
+  };
+
   const handleSendDRC20: React.FormEventHandler<HTMLFormElement> = async (
     event,
   ) => {
@@ -292,16 +301,6 @@ const Index = () => {
     const formData = new FormData(form);
     formData.append('addressIndex', String(ADDRESSINDEX));
     _mintDune(formData);
-  };
-
-  const handleSplitDunes: React.FormEventHandler<HTMLFormElement> = async (
-    event,
-  ) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.append('addressIndex', String(ADDRESSINDEX));
-    _splitDunes(formData);
   };
 
   const isSnapInstalled = Boolean(state.installedSnap);
@@ -734,7 +733,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDune}`}
                       >
                         {lastTxIdSendDune}
                       </a>
@@ -790,7 +789,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdMintDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdMintDune}`}
                       >
                         {lastTxIdMintDune}
                       </a>
@@ -918,7 +917,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdOpenDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdOpenDune}`}
                       >
                         {lastTxIdOpenDune}
                       </a>
@@ -974,7 +973,7 @@ const Index = () => {
                       <a
                         target="_blank"
                         rel="noopener noreferrer"
-                        href={`https://ord.dunesprotocol.com/tx/${lastTxIdSendDune}`}
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdSendDune}`}
                       >
                         {lastTxIdSendDune}
                       </a>
@@ -1046,6 +1045,62 @@ const Index = () => {
                   )}
                   {txErrorSendDRC20 && (
                     <ErrorMessage>{txErrorSendDRC20}</ErrorMessage>
+                  )}
+                </>
+              ),
+            }}
+          />
+        )}
+        {isSnapInstalled && (
+          <Card
+            fullWidth
+            content={{
+              title: 'Inscribe Data',
+              description: (
+                <>
+                  <form onSubmit={handleInscribeData}>
+                    <p>
+                      <input
+                        type="string"
+                        name="toAddress"
+                        placeholder="Destination Address"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="data"
+                        placeholder="data to inscribe as a hex string"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <p>
+                      <input
+                        type="string"
+                        name="contentType"
+                        placeholder="ContentType of the data (must be valid ordinal content type)"
+                        onChange={(e) => e.target.value}
+                      />
+                    </p>
+                    <button disabled={isTxLoadingInscribeData} type="submit">
+                      Inscribe Data
+                    </button>
+                  </form>
+                  {lastTxIdInscribeData && (
+                    <p>
+                      Latest transaction:{' '}
+                      <a
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://sochain.com/tx/DOGE/${lastTxIdInscribeData}`}
+                      >
+                        {lastTxIdInscribeData}
+                      </a>
+                    </p>
+                  )}
+                  {txErrorInscribeData && (
+                    <ErrorMessage>{txErrorInscribeData}</ErrorMessage>
                   )}
                 </>
               ),

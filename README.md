@@ -24,11 +24,11 @@ bun run start
 
 Then open a browser window with metamask flask installed, and go to `http://localhost:8000`
 
-**Some notes to avoid unnecessary headache**  
-*(1) If you are trying to run this locally, be sure you free up ports 8000 (site), and 8080 (mm-serve)*  
-*(2) Note, you may get some build errors if you do not use the reccomend version of node. Please run `nvm use` before starting*  
-*(3) While you don't have to run bun, it just makes local package management SO much easier. It is strongly reccomend*  
-*(4) Warnings while running bun run build are not consequential in our local testing of the snap, while we will address these in a future update, for now they can be safely ignored. Just continue to `bun run start`*
+**Some notes to avoid unnecessary headache**
+*(1) If you are trying to run this locally, be sure you free up ports 8000 (site), and 8080 (mm-serve)*
+*(2) Note, you may get some build errors if you do not use the reccomend version of node. Please run `nvm use` before starting*
+*(3) While you don't have to run bun, it just makes local package management SO much easier. It is strongly reccomend*
+*(4) If you are getting strange build errors, make sure you've cleared out any temporary caches, node modules, and/or lock files*
 
 ## Snap overview
 
@@ -69,12 +69,20 @@ This document provides detailed information on how to use the various RPC method
 We recommend creating a \`WalletProvider\` type, and implementing as follows:
 
 ```javascript
+const snapOrigin = "npm:@doggyfi-official/kobosu"
+
 const doggyfi: WalletProvider = {
   connect: async () => {
-    await window.ethereum.request({
+    const sdk = getSdk()
+    await sdk.connect()
+
+    const provider = sdk.getProvider()!
+    await provider.request({
       method: "wallet_requestSnaps",
       params: {
-        [snapOrigin]: {},
+        [snapOrigin]: {
+          version: "0.1.9", // or whatever the current / latest version is
+        },
       },
     })
 
@@ -90,7 +98,7 @@ const doggyfi: WalletProvider = {
   signPsdt: async (psdt: string) => {
     return invokeSnap("doge_signPsbt", { addressIndex: 0, psbtHexString: psdt }) as Promise<string>
   },
-  isPresent: () => !!window.ethereum,
+  isPresent: () => isInstalled(),
 }
 ```
 
@@ -179,7 +187,7 @@ Retrieve the Dogecoin address associated with a specific address index. Note tha
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`addressIndex\` (number): The index of the address to retrieve.
 
 #### Returns
@@ -199,7 +207,7 @@ Fetch all transactions associated with a specific address index.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`addressIndex\` (number): The index of the address whose transactions you want to retrieve.
 
 #### Returns
@@ -219,7 +227,7 @@ Retrieve the balance of a specific address index.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`addressIndex\` (number): The index of the address whose balance you want to retrieve.
 
 #### Returns
@@ -239,8 +247,8 @@ Inscribe arbitrary data onto the Dogecoin blockchain.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the address to use.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the address to use.
   \- \`data\` (string): The data to inscribe.
 
 #### Returns
@@ -264,9 +272,9 @@ Create and broadcast a Dogecoin transaction.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`toAddress\` (string): The recipient's Dogecoin address.
   \- \`amountInSatoshi\` (number): The amount to send in satoshis (1 DOGE \= 100,000,000 satoshis).
 
 #### Returns
@@ -290,9 +298,9 @@ Sign a Partially Signed Bitcoin Transaction (PSBT) using the specified private k
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.  
-  \- \`psbtHexString\` (string): The PSBT in hex string format.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.
+  \- \`psbtHexString\` (string): The PSBT in hex string format.
   \- \`signIndices\` (number\[\], optional): Specific input indices to sign. If not provided, all inputs will be signed.
 
 #### Returns
@@ -315,8 +323,8 @@ Sign a message using the specified private key.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the address whose private key will be used for signing.
   \- \`message\` (string): The message to sign.
 
 #### Returns
@@ -339,9 +347,9 @@ Verify a signed message.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the address that purportedly signed the message.  
-  \- \`message\` (string): The original message.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the address that purportedly signed the message.
+  \- \`message\` (string): The original message.
   \- \`signature\` (string): The signature in base64 format.
 
 #### Returns
@@ -365,7 +373,7 @@ Finalize and broadcast a signed PSBT.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`psbtHexString\` (string): The signed PSBT in hex string format.
 
 #### Returns
@@ -387,9 +395,9 @@ Mint a specific amount of a DRC20 token.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the minter's address.  
-  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the minter's address.
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.
   \- \`amount\` (string): The amount to mint.
 
 #### Returns
@@ -414,9 +422,9 @@ Mint and transfer a DRC20 token to another address.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.
   \- \`amount\` (string): The amount to mint and transfer.
 
 #### Returns
@@ -441,10 +449,10 @@ Send a Dune token to a specified address.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`dune\` (string): The identifier of the Dune token.  
-  \- \`amount\` (number): The amount to send.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`dune\` (string): The identifier of the Dune token.
+  \- \`amount\` (number): The amount to send.
   \- \`toAddress\` (string): The recipient's Dogecoin address.
 
 #### Returns
@@ -469,19 +477,19 @@ Deploy an open Dune transaction.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the deployer's address.  
-  \- \`tick\` (string): The ticker symbol.  
-  \- \`symbol\` (string): The symbol of the Dune token.  
-  \- \`limit\` (string): The limit per mint.  
-  \- \`divisibility\` (string): The divisibility of the token.  
-  \- \`cap\` (string): The total supply cap.  
-  \- \`heightStart\` (string): The starting block height.  
-  \- \`heightEnd\` (string): The ending block height.  
-  \- \`offsetStart\` (string): The starting offset.  
-  \- \`offsetEnd\` (string): The ending offset.  
-  \- \`premine\` (string): The premine amount.  
-  \- \`turbo\` (boolean): Whether to enable turbo mode.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the deployer's address.
+  \- \`tick\` (string): The ticker symbol.
+  \- \`symbol\` (string): The symbol of the Dune token.
+  \- \`limit\` (string): The limit per mint.
+  \- \`divisibility\` (string): The divisibility of the token.
+  \- \`cap\` (string): The total supply cap.
+  \- \`heightStart\` (string): The starting block height.
+  \- \`heightEnd\` (string): The ending block height.
+  \- \`offsetStart\` (string): The starting offset.
+  \- \`offsetEnd\` (string): The ending offset.
+  \- \`premine\` (string): The premine amount.
+  \- \`turbo\` (boolean): Whether to enable turbo mode.
   \- \`openMint\` (boolean): Whether the minting is open.
 
 #### Returns
@@ -515,10 +523,10 @@ Mint a Dune token.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the minter's address.  
-  \- \`id\` (string): The identifier of the Dune token.  
-  \- \`amount\` (string): The amount to mint.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the minter's address.
+  \- \`id\` (string): The identifier of the Dune token.
+  \- \`amount\` (string): The amount to mint.
   \- \`receiver\` (string): The recipient's Dogecoin address.
 
 #### Returns
@@ -543,17 +551,17 @@ Split a Dune token among multiple addresses.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`dune\` (string): The identifier of the Dune token.  
-  \- \`addresses\` (string\[\]): An array of recipient addresses.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`dune\` (string): The identifier of the Dune token.
+  \- \`addresses\` (string\[\]): An array of recipient addresses.
   \- \`amounts\` (number\[\]): An array of amounts corresponding to each recipient.
 
 #### Returns
 
 \- \`Promise\<string\>\`: The transaction ID of the broadcasted transaction.
 
-#### 
+####
 
 #### Usage Example
 
@@ -576,7 +584,7 @@ Retrieve the Dune token balances for a specific account.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`addressIndex\` (number): The index of the address whose balances you want to retrieve.
 
 #### Returns
@@ -596,8 +604,8 @@ Retrieve metadata for a specific Dune token.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`duneId\` (string, optional): The identifier of the Dune token.  
+\- \`params\` (object):
+  \- \`duneId\` (string, optional): The identifier of the Dune token.
   \- \`duneName\` (string, optional): The name of the Dune token.
 
 #### Returns
@@ -617,10 +625,10 @@ Send a Doginal (a Dogecoin ordinal) to a specified address.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`utxo\` (string): The UTXO of the Doginal to send.  
-  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`utxo\` (string): The UTXO of the Doginal to send.
+  \- \`toAddress\` (string): The recipient's Dogecoin address.
   \- \`outputIndex\` (number, optional): The output index of the Doginal.
 
 #### Returns
@@ -645,11 +653,11 @@ Send a DRC20 token to a specified address.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the sender's address.  
-  \- \`ticker\` (string): The ticker symbol of the DRC20 token.  
-  \- \`amount\` (string): The amount to send.  
-  \- \`toAddress\` (string): The recipient's Dogecoin address.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the sender's address.
+  \- \`ticker\` (string): The ticker symbol of the DRC20 token.
+  \- \`amount\` (string): The amount to send.
+  \- \`toAddress\` (string): The recipient's Dogecoin address.
   \- \`utxo\` (string): The UTXO containing the DRC20 token.
 
 #### Returns
@@ -675,11 +683,11 @@ Deploy a new DRC20 token.
 
 #### Parameters
 
-\- \`params\` (object):  
-  \- \`addressIndex\` (number): The index of the deployer's address.  
-  \- \`ticker\` (string): The ticker symbol of the new DRC20 token.  
-  \- \`maxSupply\` (string): The maximum supply of the token.  
-  \- \`lim\` (string): The limit per mint.  
+\- \`params\` (object):
+  \- \`addressIndex\` (number): The index of the deployer's address.
+  \- \`ticker\` (string): The ticker symbol of the new DRC20 token.
+  \- \`maxSupply\` (string): The maximum supply of the token.
+  \- \`lim\` (string): The limit per mint.
   \- \`decimals\` (string): The number of decimal places.
 
 #### Returns
@@ -706,7 +714,7 @@ Retrieve the DRC20 token balances for a specific address.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`addressIndex\` (number): The index of the address whose balances you want to retrieve.
 
 #### Returns
@@ -726,7 +734,7 @@ Retrieve information about a specific DRC20 token.
 
 #### Parameters
 
-\- \`params\` (object):  
+\- \`params\` (object):
   \- \`ticker\` (string): The ticker symbol of the DRC20 token.
 
 #### Returns
@@ -742,10 +750,10 @@ console.log(`DRC20 Token Info:`, tokenInfo);
 
 ## Notes
 
-\- All methods are asynchronous and return Promises.  
-\- Ensure that you handle errors appropriately by using try-catch blocks or \`.catch()\` methods.  
-\- Before broadcasting transactions, make sure to get user confirmations where necessary.  
-\- The \`addressIndex\` parameter is crucial for methods that require access to a private key or address. Ensure that you use the correct index.  
+\- All methods are asynchronous and return Promises.
+\- Ensure that you handle errors appropriately by using try-catch blocks or \`.catch()\` methods.
+\- Before broadcasting transactions, make sure to get user confirmations where necessary.
+\- The \`addressIndex\` parameter is crucial for methods that require access to a private key or address. Ensure that you use the correct index.
 \- For methods that involve fees, the fee rate is fetched automatically, but users are prompted to confirm before proceeding.
 
 ## DISCLAIMER

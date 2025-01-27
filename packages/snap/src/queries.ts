@@ -2,7 +2,8 @@ import { pushTransaction } from './doggyfi-apis/pushTransaction';
 import { fetchTxInfo } from './doggyfi-apis/getTxInfo';
 import { fetchBlockCount } from './doggyfi-apis/blockcount';
 import { TxInfoResponse } from './doggyfi-apis/interfaces';
-interface UTXO {
+
+type UTXO = {
   txid: string;
   vout: number;
   address: string;
@@ -11,18 +12,18 @@ interface UTXO {
   confirmations: number;
   height: number;
   dune_amount: string;
-}
+};
 
-interface LastUpdated {
+type LastUpdated = {
   block_hash: string;
   block_height: number;
-}
+};
 
-export interface UTXOResponse {
+export type UTXOResponse = {
   utxos: UTXO[];
   lastUpdated: LastUpdated;
   nextCursor: string;
-}
+};
 
 /**
  * Method to get the block count from the RPC.

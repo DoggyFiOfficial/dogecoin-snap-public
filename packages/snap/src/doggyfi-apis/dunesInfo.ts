@@ -3,7 +3,8 @@ import { DuneInfo } from './interfaces';
 
 /**
  * Fetch the dune info.
- * @param dune Either the dune id or the dune name without spaces.
+ *
+ * @param dune - Either the dune id or the dune name without spaces.
  * @returns Json object with the dune info.
  */
 export async function fetchDuneInfo(dune: string): Promise<DuneInfo | null> {

@@ -4,7 +4,7 @@ import { TxInfoResponse } from './interfaces';
 /**
  * Fetch the info about a transaction.
  *
- * @param txid The transaction id.
+ * @param txid - The transaction id.
  * @returns Json object with the info about the transaction.
  */
 export async function fetchTxInfo(

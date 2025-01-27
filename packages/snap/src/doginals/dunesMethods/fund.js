@@ -1,6 +1,6 @@
 // sir duney methdod for adding fees and inputs
 
-const getUtxosWithOutDunes = async (wallet) => {
+const getUtxosWithOutDunes = (wallet) => {
   const nonDuneUtxos = [];
   // we added dunes and inscriptions to the utxos, so we can just filter out the ones that don't have dunes
   wallet.utxos.forEach((utxo) => {
@@ -16,16 +16,19 @@ const getUtxosWithOutDunes = async (wallet) => {
   return nonDuneUtxos;
 };
 
-export async function fund(
-  wallet,
-  tx,
-  onlySafeUtxos = true,
-  filterDust = true,
-) {
+/**
+ * Funds the fees for a transaction.
+ *
+ * @param {*} wallet - Instance of Apezord wallet.
+ * @param {*} tx - Instance of Transaction object.
+ * @param {*} onlySafeUtxos - Boolean to filter out utxos that are not safe to spend (likely inscriptions).
+ * @param {*} filterDust - Boolean to filter out utxos that are dust (100_000 satoshis or less).
+ */
+export function fund(wallet, tx, onlySafeUtxos = true, filterDust = true) {
   // we get the utxos without dunes
   let utxosWithoutDunes;
   if (onlySafeUtxos) {
-    utxosWithoutDunes = await getUtxosWithOutDunes(wallet);
+    utxosWithoutDunes = getUtxosWithOutDunes(wallet);
   } else {
     utxosWithoutDunes = wallet.utxos;
   }
@@ -34,7 +37,7 @@ export async function fund(
     // note inscriptions are almost always 100_000 satoshis, this is a safety check
     // we filter remove utxos that are <= 100_000 satoshis (shibes)
     utxosWithoutDunes = utxosWithoutDunes.filter(
-      (utxo) => utxo.satoshis > 100_000,
+      (utxo) => utxo.satoshis > 100000,
     );
   }
 
@@ -45,7 +48,7 @@ export async function fund(
 
   // we filter for utxos that are larger than 1 DOGE
   const largeUtxos = sortedUtxos.filter((utxo) => {
-    return utxo.satoshis > 100_000;
+    return utxo.satoshis > 100000;
   });
 
   const outputSum = tx.outputs.reduce((acc, curr) => acc + curr.satoshis, 0);
@@ -72,10 +75,9 @@ export async function fund(
 
   if (!isChangeAdded) {
     throw new Error(
-      'no change output added, need to add change output ' +
-        (outputSum + tx._estimateFee()) +
-        ' but added ' +
-        inputSumAdded,
+      `no change output added, need to add change output ${
+        outputSum + tx._estimateFee()
+      } but added ${inputSumAdded}`,
     );
   }
 

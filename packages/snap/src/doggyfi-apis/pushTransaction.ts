@@ -4,7 +4,7 @@ import { PushTxResponse } from './interfaces';
 /**
  * Push a transaction to doggyfi-api.
  *
- * @param tx The transaction to push.
+ * @param tx - The transaction to push.
  * @returns Json object with the transaction id.
  */
 export async function pushTransaction(

@@ -1,20 +1,21 @@
 // typescipt methods for managing dunes assets
+import { getBlockCount } from '../queries';
+import { fetchDuneInfo } from '../doggyfi-apis/dunesInfo';
 import { _getOpenDuneTx } from './dunesMethods/openDuneTx';
-import { _splitDuneTx, _splitDunesUtxosTx } from './dunesMethods/splitDunesTx';
+import { _splitDunesUtxosTx } from './dunesMethods/splitDunesTx';
 import { _mintDuneTx } from './dunesMethods/mintDunesTx';
 import { _sendExactDuneTx } from './dunesMethods/sendExactDuneTx';
 import { Wallet, APEUTXO } from './makeApezordWallet';
-import { getBlockCount } from '../queries';
 import { extractDuneUtxos } from './dunesMethods/extractDuneUtxo';
 import { getDuneBalances, DuneBalance } from './dunesMethods/getDunesBalances';
-import { fetchDuneInfo } from '../doggyfi-apis/dunesInfo';
 import { decimalToBigInt } from './dunesMethods/bigIntMethods';
 
 /**
  * Checks which utxos don't have dunes based on a list of dunes for the wallet.
- * @param wallet
- * @param dunes
- * @param assume100kShibe
+ *
+ * @param wallet - The apezord wallet to check.
+ * @param dunes - The list of dunes to check.
+ * @returns The list of utxos without dunes.
  */
 export async function utxosWithoutDunes(
   wallet: Wallet,
@@ -26,9 +27,8 @@ export async function utxosWithoutDunes(
   }
 
   // get list of all utxos for the wallet
-  let utxos = wallet.utxos;
-  let safeUtxos: APEUTXO[] = [];
-  for (const utxo of utxos) {
+  const safeUtxos: APEUTXO[] = [];
+  for (const utxo of wallet.utxos) {
     if (utxo.dunes.length === 0) {
       safeUtxos.push(utxo);
     }
@@ -175,6 +175,19 @@ export async function mintDuneTx(
   return [res.tx, res.fees];
 }
 
+/**
+ * Splits multiple dunes into new different outputs on a single transaction.
+ *
+ * @param wallet - An Apezord wallet.
+ * @param dune - The dune to split.
+ * @param addresses - The addresses to send the dunes to.
+ * @param amounts - The amounts to send the dunes to.
+ * @param doggyfiFee - The doggyfi fee.
+ * @param doggyfiAddress - The doggyfi address.
+ * @param _duneID - The dune id.
+ * @param _duneUtxosMap - The dune utxos map.
+ * @returns The transaction and the fees.
+ */
 export async function splitDunesUtxosTX(
   wallet: Wallet,
   dune: string,
@@ -211,13 +224,16 @@ export async function splitDunesUtxosTX(
   if (resp === null) {
     throw new Error('Could not fetch dune info');
   }
+
   if (duneID === null) {
     duneID = resp.id;
   }
   // need to pass in the string representation of the amounts, pad the decimals with 0s
   const _amounts = [];
   for (const amount of amounts) {
-    _amounts.push(decimalToBigInt(amount, Number(resp.divisibility)).toString());
+    _amounts.push(
+      decimalToBigInt(amount, Number(resp.divisibility)).toString(),
+    );
   }
   const res = await _splitDunesUtxosTx(
     wallet,
@@ -229,16 +245,16 @@ export async function splitDunesUtxosTX(
     doggyfiAddress,
   );
 
-  return [res['tx'], res['fees']];
+  return [res.tx, res.fees];
 }
 
 /**
  * Sends a dune to an address.
  *
- * @param wallet
- * @param address
- * @param amount
- * @param dune
+ * @param wallet - An Apezord wallet.
+ * @param address - The address to send the dune to.
+ * @param amount - The amount to send.
+ * @param dune - The dune to send.
  * @param doggyfiFee - The doggyfi fee.
  * @param doggyfiAddress - The doggyfi address.
  * @returns The transaction and the fees.
@@ -258,20 +274,26 @@ export async function sendDuneTx(
       `Insufficient dune balance found for dune ${dune} with amount ${amount}`,
     );
   }
-  let utxos = _.duneUtxos;
-  let totalDuneBalance = _.totalAmount;
+  const utxos = _.duneUtxos;
+  const totalDuneBalance = _.totalAmount;
 
   let tx: string;
   let fees: number;
-  if (utxos.length == 1 && totalDuneBalance === amount) {
+  if (utxos.length === 1 && totalDuneBalance === amount) {
     // Need to make splits
     const resp = await fetchDuneInfo(dune);
     if (resp === null) {
       throw new Error('Could not fetch dune info');
     }
-    const res = await _sendExactDuneTx(wallet, address, utxos[0], doggyfiFee, doggyfiAddress);
-    tx = res['tx'];
-    fees = res['fees'];
+    const res = _sendExactDuneTx(
+      wallet,
+      address,
+      utxos[0],
+      doggyfiFee,
+      doggyfiAddress,
+    );
+    tx = res.tx;
+    fees = res.fees;
   } else {
     // Need to make splits
     const res = await splitDunesUtxosTX(
@@ -300,7 +322,7 @@ export function moveDecimalToRight(value: string): bigint {
   const [integerPart, fractionalPart] = value.split('.');
 
   // 2. Combine the integer and fractional parts into a single string
-  const combined = integerPart + (fractionalPart || "");
+  const combined = integerPart + (fractionalPart || '');
 
   // 3. Convert the result into a BigInt
   return BigInt(combined);

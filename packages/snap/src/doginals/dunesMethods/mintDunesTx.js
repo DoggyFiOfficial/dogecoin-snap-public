@@ -1,19 +1,18 @@
-//sir-duney method for minting dunes
-const { Edict } = require('./edict');
-const dogecore = require('bitcore-lib-doge');
-const { Transaction } = require('bitcore-lib-doge');
-const { constructScript } = require('./constructScript');
-const { fund } = require('./fund');
+import dogecore, { Transaction } from 'bitcore-lib-doge';
+import { Edict } from './edict';
+import { constructScript } from './constructScript';
+import { fund } from './fund';
 
 const parseDuneId = (id, claim = false) => {
   // Check if Dune ID is in the expected format
-  const regex1 = /^\d+\:\d+$/;
-  const regex2 = /^\d+\/\d+$/;
+  const regex1 = /^\d+\:\d+$/; // eslint-disable-line 
+  const regex2 = /^\d+\/\d+$/; // eslint-disable-line
 
-  if (!regex1.test(id) && !regex2.test(id))
+  if (!regex1.test(id) && !regex2.test(id)) {
     console.log(
       `Dune ID ${id} is not in the expected format e.g. 1234:1 or 1234/1`,
     );
+  }
 
   // Parse the id string to get height and index
   const [heightStr, indexStr] = regex1.test(id) ? id.split(':') : id.split('/');
@@ -21,12 +20,12 @@ const parseDuneId = (id, claim = false) => {
   const index = parseInt(indexStr, 10);
 
   // Set the bits in the id using bitwise OR
-  let duneId = (BigInt(height) << BigInt(16)) | BigInt(index);
+  let duneId = (BigInt(height) << BigInt(16)) | BigInt(index); // eslint-disable-line no-bitwise
 
   // For minting set CLAIM_BIT
   if (claim) {
-    const CLAIM_BIT = BigInt(1) << BigInt(48);
-    duneId |= CLAIM_BIT;
+    const CLAIM_BIT = BigInt(1) << BigInt(48); // eslint-disable-line no-bitwise
+    duneId |= CLAIM_BIT; // eslint-disable-line no-bitwise
   }
 
   return duneId;
@@ -51,27 +50,27 @@ export const _mintDuneTx = async (
   const script = constructScript(null, undefined, null, edicts);
 
   // getting the wallet balance
-  let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0);
-  if (balance == 0) throw new Error('no funds');
+  const balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0);
+  if (balance === 0) {
+    throw new Error('no funds');
+  }
 
   // creating new tx
-  let tx = new Transaction();
+  const tx = new Transaction();
 
   // output carries the protocol message
-  tx.addOutput(
-    new dogecore.Transaction.Output({ script: script, satoshis: 0 }),
-  );
+  tx.addOutput(new dogecore.Transaction.Output({ script, satoshis: 0 }));
 
   // add receiver output holding dune amount
-  tx.to(receiver, 100_000);
+  tx.to(receiver, 100000);
 
   // finally add doggyfi fee
   tx.to(doggyfiAddress, doggyfiFee);
 
   await fund(wallet, tx);
 
-  let serializedTx = tx.uncheckedSerialize();
-  let _fees = tx.inputAmount - tx.outputAmount;
+  const serializedTx = tx.uncheckedSerialize();
+  const _fees = tx.inputAmount - tx.outputAmount;
 
   // return tx with fees
   return {

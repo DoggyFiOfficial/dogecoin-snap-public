@@ -37,14 +37,14 @@ import {
   openDuneTx as _openDuneTx,
   mintDuneTx as _mintDuneTx,
   sendDuneTx,
+  splitDunesUtxosTX,
 } from './doginals/dunes';
 import { getSatRange } from './find-ord-index';
 import { makeTransferInscription } from './doginals/inscribeMethods';
 import {
   getDuneBalances,
-  DuneBalance,
+  type DuneBalance,
 } from './doginals/dunesMethods/getDunesBalances';
-import { splitDunesUtxosTX } from './doginals/dunes';
 import {
   DuneInfo,
   TxInfoResponse,
@@ -129,7 +129,7 @@ export const getTransactions = async (
 /**
  * Get the balance for the given address index.
  *
- * @param params The parameters for getting the balance.
+ * @param params - The parameters for getting the balance.
  * @returns The balance of the address.
  */
 export const getBalance = async (params: addressParams): Promise<number> => {
@@ -137,7 +137,6 @@ export const getBalance = async (params: addressParams): Promise<number> => {
   // fetch unspents for the address
   const utxosResp = await fetchUTXOs(myAddress);
   if (utxosResp === null) {
-    console.log('UTXO response is null, returning 0');
     return 0;
   }
   // calculate the balance by summing the values of the unspents
@@ -152,10 +151,10 @@ export const getBalance = async (params: addressParams): Promise<number> => {
 };
 
 /**
- * Inscribe arbitrary data
+ * Inscribes arbitrary data onto the blockchain.
  *
- * @param params The parameters for inscribing data.
- * @returns The transaction hash.
+ * @param params - The parameters for inscribing data.
+ * @returns The transaction hash and other relevant information.
  */
 export const inscribeData = async (
   params: inscribeDataParams,
@@ -175,6 +174,7 @@ export const inscribeData = async (
     privkey,
     myAddress,
     params.data,
+    params.contentType,
     Number(doggyfiFee.tip),
     doggyfiFee.tipAddress,
   );
@@ -212,13 +212,7 @@ export const inscribeData = async (
 };
 
 /**
- * Create a Dogecoin P2PKH transaction and broadcast it over the network. The current
- * logic is very raw. Among other things:
- * - It's missing much error checking.
- * - It uses JavaScript's Number type, which only has so much decimal precision.
- * - The fees are calculated using Mainnet, since the API we use doesn't provide Testnet fees.
- * - The fees are subtracted from the amount to send.
- * - Probably many other bugs and issues...
+ * Create a Dogecoin P2PKH transaction and broadcast it over the network.
  *
  * The steps are:
  * - Present a dialog for the user to confirm the transaction. This is
@@ -231,6 +225,7 @@ export const inscribeData = async (
  * @param transactionParams - The transaction parameters.
  * @param transactionParams.toAddress - The destination address.
  * @param transactionParams.amountInSatoshi - The amount to send, in "satoshis" i.e. DOGE * 100_000_000.
+ * @param transactionParams.addressIndex - The index of the address to use.
  */
 export const makeTransaction = async ({
   addressIndex,
@@ -266,17 +261,25 @@ export const makeTransaction = async ({
     throw new Error('Private key is required');
   }
 
-  const myAddress = await getAddress({ addressIndex: addressIndex });
+  const myAddress = await getAddress({ addressIndex });
   const utxosResp = await fetchUTXOs(myAddress);
   if (utxosResp === null) {
     throw new Error('Could not fetch utxos');
   }
   const allUtxos = utxosResp.unspents;
+
   // filter out any utxos with inscriptions or dunes, and enough value
+  // note sometimes 100k koinu is okay, but often could be ins, safer to exclude
+  const filteredUtxos = allUtxos.filter((utxo) => {
+    return utxo.inscriptions.length === 0 && utxo.dunes.length === 0 && utxo.value > 100000;
+  })
+
+  // sort filtered utxos from largest to smallest
+  const sortedFilteredUtxos = filteredUtxos.sort((a, b) => b.value - a.value);
+
+  //filter for value to send
   const utxos = await getUtxosForValue(
-    allUtxos.filter((utxo) => {
-      return utxo.inscriptions.length === 0 && utxo.dunes.length === 0;
-    }),
+    sortedFilteredUtxos,
     amountInSatoshi,
   );
 
@@ -304,6 +307,7 @@ export const makeTransaction = async ({
       }
 
       psbt.addInput({
+        // @ts-expect-error this actually works fine, eslint resolving the type wrong...
         hash: utxo.hash,
         index: utxo.vout_index, // note this typing is specific to dogeord responses...
         nonWitnessUtxo: Buffer.from(txHex, 'hex'),
@@ -311,10 +315,10 @@ export const makeTransaction = async ({
     }),
   );
 
-  const numInputs = psbt.inputCount
-  const numOutputs = psbt.txOutputs.length + 3
-  const size = 10 + numInputs * 148 + numOutputs * 34
-  const fee = size * Math.max(feePerByte || 100_000, 50_000)
+  const numInputs = psbt.inputCount;
+  const numOutputs = psbt.txOutputs.length + 3;
+  const size = 10 + numInputs * 148 + numOutputs * 34;
+  const fee = size * Math.max(feePerByte || 100_000, 50_000);
 
   // get doggyfi-api tip
   const tip = await getTipRate();
@@ -327,10 +331,54 @@ export const makeTransaction = async ({
     0,
   );
 
-  const changeValue = Math.floor(totalUtxoValue - amountInSatoshi - fee);
+  let changeValue = Math.floor(totalUtxoValue - amountInSatoshi - fee - Number(tip.tip));
 
-  if (changeValue < 0) {
-    throw new Error('Must have enough funds for transaction + fees');
+  if (changeValue < 0) { // might need to add additional inputs...
+    // filter out utxos from allUtxos
+    const remUtxos = sortedFilteredUtxos.filter(
+      (u) =>
+        !utxos.some(
+          (used) => used.hash === u.hash && used.vout_index === u.vout_index
+        )
+    );
+
+    // keep adding utxos from remUtxos until balance is satisfied
+    while (remUtxos.length > 0 && changeValue < 0) {
+      const utxo = remUtxos.pop()
+
+      if (utxo === undefined) {
+        throw Error('Undefinied utxo in list...');
+      }
+
+      let txHex;
+      try {
+        const txResp = await fetchTxInfo(utxo.hash);
+        if (txResp === null) {
+          throw new Error('Could not fetch transaction details');
+        }
+        txHex = txResp.hex;
+      } catch (err: any) {
+        const msg = `error while getting transaction hex${err} ${utxo.hash}`;
+        throw new Error(msg);
+      }
+
+      psbt.addInput(
+        {
+          // @ts-expect-error this actually works fine, eslint resolving the type wrong...
+          hash: utxo.hash,
+          index: utxo.vout_index, // note this typing is specific to dogeord responses...
+          nonWitnessUtxo: Buffer.from(txHex, 'hex'),
+        }
+      )
+
+      // increment change value by the amount added
+      changeValue = changeValue + Number(utxo.value);
+    }
+  }
+
+  // if change value is still less than 0, means there are not enough funds
+  if (changeValue < 0 ) {
+    throw Error(`Not enough funds to send ! ${amountInSatoshi / 100000000} DOGE + ${fee / 100000000} + in network fees + ${Number(tip.tip) / 100000000} in API fees`);
   }
 
   psbt.addOutput({
@@ -384,8 +432,9 @@ export const makeTransaction = async ({
 /**
  * Signs a PSBT with the selected private key.
  *
- * @param addressIndex - The address index to use.
- * @param psbt - The PSBT to sign.
+ * @param params - The parameters for signing the PSBT.
+ * @param params.addressIndex - The address index to use.
+ * @param params.psbt - The PSBT to sign.
  * @returns The signed PSBT as a hex string.
  */
 export async function signPsbt(params: signPsbtParams): Promise<string> {
@@ -417,17 +466,17 @@ export async function signPsbt(params: signPsbtParams): Promise<string> {
     network: dogecoinNetwork,
   });
 
-  if (!params.signIndices) {
-    psbtCopy.signAllInputs(
-      bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
-    );
-  } else {
+  if (params.signIndices) {
     for (const i of params.signIndices) {
       psbtCopy.signInput(
         i,
         bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
       );
     }
+  } else {
+    psbtCopy.signAllInputs(
+      bitcoin.ECPair.fromPrivateKey(Buffer.from(account.privateKeyBytes)),
+    );
   }
 
   return psbtCopy.toHex();
@@ -436,8 +485,9 @@ export async function signPsbt(params: signPsbtParams): Promise<string> {
 /**
  * Signs a Message with the selected private key.
  *
- * @param addressIndex - The address index to use.
- * @param message - The message to sign.
+ * @param params - The parameters for signing.
+ * @param params.addressIndex - The address index to use.
+ * @param params.message - The message to sign.
  * @returns The signed message.
  */
 export async function signMessage(params: signMessageParams): Promise<string> {
@@ -470,13 +520,13 @@ export async function signMessage(params: signMessageParams): Promise<string> {
       network: dogecoinNetwork,
     },
   );
-  const privateKey = keyPair.privateKey;
-  if (!privateKey) {
+
+  if (keyPair.privateKey === undefined) {
     throw new Error('Private key is required');
   }
   const signature = bitcoinMessage.sign(
     params.message,
-    privateKey,
+    keyPair.privateKey,
     keyPair.compressed,
   );
   return signature.toString('base64');
@@ -485,9 +535,10 @@ export async function signMessage(params: signMessageParams): Promise<string> {
 /**
  * Verifies a message with the selected address.
  *
- * @param addressIndex
- * @param message
- * @param signature
+ * @param params - The parameters for the message verification.
+ * @param params.addressIndex - The index of the address in use.
+ * @param params.message - The message to be verified.
+ * @param params.signature - The signature to verify.
  * @returns A promise of a boolean indicating if the message is verified.
  */
 export async function verifyMessage(
@@ -521,8 +572,8 @@ export async function verifyMessage(
       network: dogecoinNetwork,
     },
   );
-  const publicKey = keyPair.publicKey;
-  if (!publicKey) {
+
+  if (keyPair.publicKey === undefined) {
     throw new Error('Public key is required');
   }
   return bitcoinMessage.verify(
@@ -535,7 +586,7 @@ export async function verifyMessage(
 /**
  * Pushes a signed PSBT to the network.
  *
- * @param psbt
+ * @param params - A PushPsbtParams object containing the PSBT to push.
  * @returns A promise of the transaction hash.
  */
 export async function pushPsbt(params: pushPsbtParams): Promise<string> {
@@ -1073,7 +1124,9 @@ export async function splitDune(params: splitDuneTxParams) {
  */
 export async function getDuneBalancesForAccount(
   params: GetDuneBalancesParams,
-): Promise<Object> {
+): Promise<{
+  [key: string]: DuneBalance;
+}> {
   const account = await getAccount(params.addressIndex);
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
@@ -1085,6 +1138,7 @@ export async function getDuneBalancesForAccount(
   const res = await getDuneBalances(wallet);
   return res;
 }
+
 /**
  * Get dune metadata for a dune.
  *
@@ -1097,16 +1151,17 @@ export async function getDuneMetadata(
   const id = params.duneId;
   const name = params.duneName;
   let resp: DuneInfo | null;
+
   if (id === undefined && name === undefined) {
     throw new Error('Must provide either duneId or duneName');
   } else if (id !== undefined) {
     resp = await fetchDuneInfo(id);
-  } else if (name !== undefined) {
-    resp = await fetchDuneInfo(name);
-  } else {
+  } else if (name === undefined) {
     throw new Error(
       'Unexpected error getting dune metadata with provided params',
     );
+  } else {
+    resp = await fetchDuneInfo(name);
   }
 
   if (resp === null) {
@@ -1165,6 +1220,7 @@ export async function sendDoginal(
 
   // add doginal as 0th input
   psbt.addInput({
+    // @ts-expect-error this actually works fine, eslint resolving the type wrong...
     hash: txResp.txid,
     index: _params.outputIndex || 0,
     nonWitnessUtxo: Buffer.from(txResp.hex, 'hex'),
@@ -1180,10 +1236,10 @@ export async function sendDoginal(
   if (feePerByte === null) {
     throw new Error('Could not fetch fee rate');
   }
-  const numInputs = psbt.inputCount
-  const numOutputs = psbt.txOutputs.length + 3
-  const size = 10 + numInputs * 148 + numOutputs * 34
-  const fee = size * Math.max(feePerByte || 100_000, 50_000)
+  const numInputs = psbt.inputCount;
+  const numOutputs = psbt.txOutputs.length + 3;
+  const size = 10 + numInputs * 148 + numOutputs * 34;
+  const fee = size * Math.max(feePerByte || 100_000, 50_000);
 
   // fetch the utxos to fund the fee
   const unspentsResp = await fetchUTXOs(myAddress);
@@ -1204,7 +1260,7 @@ export async function sendDoginal(
   await Promise.all(
     utxos.map(async (iutxo) => {
       // if (utxo.tx_hash !== drc20_utxo.tx_hash) {
-      let txHex : string | undefined;
+      let txHex: string | undefined;
       try {
         // get the txHex of the utxo
         txHex = (await fetchTxInfo(iutxo.hash))?.hex;
@@ -1212,10 +1268,13 @@ export async function sendDoginal(
         const msg = `error while getting transaction hex${err} ${txResp.txid}`;
         throw new Error(msg);
       }
+
       if (txHex === undefined) {
-        throw new Error("Could not get txHex");
+        throw new Error('Could not get txHex');
       }
+
       psbt.addInput({
+        // @ts-expect-error this actually works fine, eslint resolving the type wrong...
         hash: iutxo.hash,
         index: iutxo.vout_index,
         nonWitnessUtxo: Buffer.from(txHex, 'hex'),
@@ -1243,6 +1302,7 @@ export async function sendDoginal(
   if (tip === null) {
     throw new Error('Could not fetch tip rate');
   }
+
   psbt.addOutput({
     address: tip.tipAddress,
     value: Number(tip.tip),
@@ -1463,7 +1523,7 @@ export async function getDrc20Info(
 /**
  * Add doggyfi-api tip to a transaction.
  *
- * @params psbt - The psbt to add the tip to.
+ * @param psbt - The psbt to add the tip to.
  * @returns The psbt with the tip added.
  */
 export async function addTip(
@@ -1473,6 +1533,7 @@ export async function addTip(
   if (tip === null) {
     throw new Error('Could not fetch tip rate');
   }
+
   psbt.addOutput({
     address: tip.tipAddress,
     value: Number(tip.tip),
