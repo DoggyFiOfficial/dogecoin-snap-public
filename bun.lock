@@ -80,7 +80,7 @@
     },
     "packages/snap": {
       "name": "@doggyfi-official/kobosu",
-      "version": "0.1.8",
+      "version": "0.1.9",
       "dependencies": {
         "@metamask/key-tree": "^7.0.0",
         "@metamask/snaps-types": "^0.32.2",

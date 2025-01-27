@@ -137,7 +137,6 @@ export const getBalance = async (params: addressParams): Promise<number> => {
   // fetch unspents for the address
   const utxosResp = await fetchUTXOs(myAddress);
   if (utxosResp === null) {
-    console.log('UTXO response is null, returning 0');
     return 0;
   }
   // calculate the balance by summing the values of the unspents
@@ -268,11 +267,19 @@ export const makeTransaction = async ({
     throw new Error('Could not fetch utxos');
   }
   const allUtxos = utxosResp.unspents;
+
   // filter out any utxos with inscriptions or dunes, and enough value
+  // note sometimes 100k koinu is okay, but often could be ins, safer to exclude
+  const filteredUtxos = allUtxos.filter((utxo) => {
+    return utxo.inscriptions.length === 0 && utxo.dunes.length === 0 && utxo.value > 100000;
+  })
+
+  // sort filtered utxos from largest to smallest
+  const sortedFilteredUtxos = filteredUtxos.sort((a, b) => b.value - a.value);
+
+  //filter for value to send
   const utxos = await getUtxosForValue(
-    allUtxos.filter((utxo) => {
-      return utxo.inscriptions.length === 0 && utxo.dunes.length === 0;
-    }),
+    sortedFilteredUtxos,
     amountInSatoshi,
   );
 
@@ -324,10 +331,54 @@ export const makeTransaction = async ({
     0,
   );
 
-  const changeValue = Math.floor(totalUtxoValue - amountInSatoshi - fee);
+  let changeValue = Math.floor(totalUtxoValue - amountInSatoshi - fee - Number(tip.tip));
 
-  if (changeValue < 0) {
-    throw new Error('Must have enough funds for transaction + fees');
+  if (changeValue < 0) { // might need to add additional inputs...
+    // filter out utxos from allUtxos
+    const remUtxos = sortedFilteredUtxos.filter(
+      (u) =>
+        !utxos.some(
+          (used) => used.hash === u.hash && used.vout_index === u.vout_index
+        )
+    );
+
+    // keep adding utxos from remUtxos until balance is satisfied
+    while (remUtxos.length > 0 && changeValue < 0) {
+      const utxo = remUtxos.pop()
+
+      if (utxo === undefined) {
+        throw Error('Undefinied utxo in list...');
+      }
+
+      let txHex;
+      try {
+        const txResp = await fetchTxInfo(utxo.hash);
+        if (txResp === null) {
+          throw new Error('Could not fetch transaction details');
+        }
+        txHex = txResp.hex;
+      } catch (err: any) {
+        const msg = `error while getting transaction hex${err} ${utxo.hash}`;
+        throw new Error(msg);
+      }
+
+      psbt.addInput(
+        {
+          // @ts-expect-error this actually works fine, eslint resolving the type wrong...
+          hash: utxo.hash,
+          index: utxo.vout_index, // note this typing is specific to dogeord responses...
+          nonWitnessUtxo: Buffer.from(txHex, 'hex'),
+        }
+      )
+
+      // increment change value by the amount added
+      changeValue = changeValue + Number(utxo.value);
+    }
+  }
+
+  // if change value is still less than 0, means there are not enough funds
+  if (changeValue < 0 ) {
+    throw Error(`Not enough funds to send ! ${amountInSatoshi / 100000000} DOGE + ${fee / 100000000} + in network fees + ${Number(tip.tip) / 100000000} in API fees`);
   }
 
   psbt.addOutput({
@@ -764,21 +815,16 @@ export async function sendDune(params: sendDuneParams) {
   if (!account.privateKeyBytes) {
     throw new Error('Private key is required');
   }
-  console.log('Got account');
 
   const myAddress = await getAddress({ addressIndex: params.addressIndex });
-  console.log('Got my address');
   const privkey = deriveBase58PrivateKey(account.privateKeyBytes);
-  console.log('Got privkey');
   const wallet = await makeWalletFromDogeOrd(privkey, myAddress, false);
-  console.log('Made wallet');
 
   // get doggyfi-api tip
   const tip = await getTipRate();
   if (tip === null) {
     throw new Error('Could not fetch tip rate');
   }
-  console.log('Got tip');
 
   const [tx, fees] = await sendDuneTx(
     wallet,
@@ -788,7 +834,6 @@ export async function sendDune(params: sendDuneParams) {
     Number(tip.tip),
     tip.tipAddress,
   );
-  console.log('Made Send Dune Tx');
 
   // ask user to confirm fee
   const confirmationResponse2 = await snap.request({
