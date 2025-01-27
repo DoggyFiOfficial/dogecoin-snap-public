@@ -110,9 +110,10 @@ export const inscribeData = async ({
 };
 
 /**
- * Invoke the "doge_getAddress" RPC method from the snap.
+ * Invoke the "doge_getAddress" RPC method from the snap to retrieve a Dogecoin address.
  *
- * @params - The address parameters.
+ * @param addressIndex - The index of the address to retrieve from the wallet.
+ * @returns Returns a promise that resolves to the result of the RPC request.
  */
 export const getAddress = async (addressIndex: number) => {
   return snapRpcRequest({
@@ -124,7 +125,10 @@ export const getAddress = async (addressIndex: number) => {
 };
 
 /**
- * Invoke the "doge_getBalance" RPC method from the snap.
+ * Invokes the "doge_getBalance" RPC method via the snap to retrieve the balance for a specific address index.
+ *
+ * @param addressIndex - The index of the address for which to fetch the balance.
+ * @returns A promise that resolves to the balance data returned by the RPC method.
  */
 export const getBalance = async (addressIndex: number) => {
   return snapRpcRequest({
@@ -140,10 +144,12 @@ type MakeTransactionParams = {
   amountInDoge: number;
   toAddress: string;
 };
+
 /**
  * Invoke the "doge_makeTransaction" RPC method from the snap.
  *
  * @param params - The transaction parameters.
+ * @param params.addressIndex - The index of the address to use for sending.
  * @param params.toAddress - The address to send DOGE to.
  * @param params.amountInDoge - The amount to send in DOGE.
  */
@@ -167,10 +173,11 @@ export const makeTransaction = async ({
  * Invoke the "doge_mintDrc20" RPC method from the snap.
  *
  * @param params - The transaction parameters.
- * @param params.toAddress - The address to send DOGE to.
- * @param params.amountInDoge - The amount to send in DOGE.
- * @param params.ticker
- * @param params.amount
+ * @param params.addressIndex - The index of the address to use for minting.
+ * @param params.toAddress - The address to send the minted tokens to.
+ * @param params.ticker - The token ticker symbol.
+ * @param params.amount - The amount of tokens to mint.
+ * @returns A promise that resolves to the result of the RPC call.
  */
 export const mintDrc20 = async ({
   addressIndex,
@@ -195,13 +202,14 @@ export const mintDrc20 = async ({
 };
 
 /**
- * Invoke the "doge_inscribeTransferDrc20" RPC method from the snap.
+ * Invokes the "doge_inscribeTransferDrc20" RPC method from the snap to mint and transfer DRC20 tokens.
  *
  * @param params - The transaction parameters.
- * @param params.toAddress: - The DOGE address to inscribe the DRC20 to.
- * @param params.ticker
- * @param params.amount
- * @param params.toAddress
+ * @param params.addressIndex - The index of the address in the wallet to use for the transaction.
+ * @param params.toAddress - The DOGE address to inscribe the DRC20 tokens to.
+ * @param params.ticker - The ticker symbol of the DRC20 token to mint and transfer.
+ * @param params.amount - The amount of DRC20 tokens to mint and transfer.
+ * @returns A promise that resolves with the result of the RPC call.
  */
 export const mintTransferDrc20 = async ({
   addressIndex,
@@ -229,9 +237,10 @@ export const mintTransferDrc20 = async ({
  * Invoke the "doge_sendDoginal" RPC method from the snap.
  *
  * @param params - The transaction parameters.
+ * @param params.addressIndex - The index of the address in the wallet.
  * @param params.toAddress - The address to send DOGE to.
- * @param params.utxo - The amount to send in DOGE.
- * @param params.outputIndex
+ * @param params.utxo - The Unspent Transaction Output (UTXO) string to use for the transaction.
+ * @param params.outputIndex - The index of the output in the UTXO, can be undefined or null.
  */
 export const sendDoginal = async ({
   addressIndex,
@@ -259,10 +268,11 @@ export const sendDoginal = async ({
  * Invoke the "doge_sendDrc20" RPC method from the snap.
  *
  * @param params - The transaction parameters.
+ * @param params.addressIndex - The index of the address to use for the transaction.
  * @param params.toAddress - The address to send DRC20 to.
- * @param params.utxo - The UTXO to send.
- * @param params.ticker - The ticker of the DRC20.
- * @param params.amount - The amount to send.
+ * @param params.utxo - The UTXO to spend for the transaction.
+ * @param params.ticker - The ticker symbol of the DRC20 token to send.
+ * @param params.amount - The amount of DRC20 to send.
  */
 export const sendDrc20 = async ({
   addressIndex,
@@ -290,13 +300,15 @@ export const sendDrc20 = async ({
 };
 
 /**
- * Invoke the "doge_deployDrc20" RPC method from the snap.
+ * Invoke the "doge_deployDrc20" RPC method from the snap to deploy a new DRC20 token.
  *
  * @param params - The transaction parameters.
- * @param params.ticker - The ticker of the DRC20.
- * @param params.maxSupply - The maximum supply of the DRC20.
- * @param params.lim - The limit of the DRC20.
- * @param params.decimals - The decimals of the DRC20.
+ * @param params.addressIndex - The index of the address to use for deployment.
+ * @param params.ticker - The ticker symbol of the DRC20 token.
+ * @param params.maxSupply - The maximum supply of the DRC20 token.
+ * @param params.lim - The limit of the DRC20 token, can be null or undefined.
+ * @param params.decimals - The number of decimal places for the DRC20 token, can be null or undefined.
+ * @returns A promise that resolves to the result of the RPC call.
  */
 export const deployDrc20 = async ({
   addressIndex,
@@ -323,12 +335,15 @@ export const deployDrc20 = async ({
   });
 };
 
-/** method to send a Dune
+/**
+ * Sends a Dune transaction.
  *
  * @param params - The transaction parameters.
- * @param params.addressIndex - The address index.
- * @param params.dune - The dune to send.
- * @returns The transaction hash.
+ * @param params.addressIndex - The index of the address to use for sending the Dune.
+ * @param params.toAddress - The destination address for the transaction.
+ * @param params.amount - The amount of Dune to send.
+ * @param params.dune - The specific type or identifier of the Dune to send.
+ * @returns A promise that resolves to the transaction hash.
  */
 export const sendDune = async ({
   addressIndex,
@@ -356,19 +371,21 @@ export const sendDune = async ({
  * Invoke the "doge_openDune" RPC method from the snap.
  *
  * @param params - The transaction parameters.
- * @param params.addressIndex - The address index.
- * @param params.toAddress - The address to send the dune to.
- * @param params.limit - The limit of the dune.
- * @param params.divisibility - The divisibility of the dune.
- * @param params.cap - The cap of the dune.
- * @param params.heightStart - The start height of the dune.
- * @param params.heightEnd - The end height of the dune.
- * @param params.offsetStart - The start offset of the dune.
- * @param params.offsetEnd - The end offset of the dune.
- * @param params.premine - The premine of the dune.
- * @param params.turbo - The turbo of the dune.
- * @param params.openMint - The open mint of the dune.
- * @returns The transaction hash.
+ * @param params.addressIndex - The index of the address from which to send the dune.
+ * @param params.toAddress - The address to which the dune will be sent.
+ * @param params.tick - The tick symbol for the dune.
+ * @param params.symbol - The symbol of the dune.
+ * @param params.limit - The limit of the dune, can be null if not applicable.
+ * @param params.divisibility - The divisibility of the dune, determining how many decimal places it can have.
+ * @param params.cap - The cap or maximum supply of the dune, can be null if not set.
+ * @param params.heightStart - The starting block height for the dune, can be null if not set.
+ * @param params.heightEnd - The ending block height for the dune, can be null if not set.
+ * @param params.offsetStart - The starting offset for the dune, can be null if not set.
+ * @param params.offsetEnd - The ending offset for the dune, can be null if not set.
+ * @param params.premine - The amount of dune pre-mined, if any.
+ * @param params.turbo - Indicates if turbo mode is enabled for faster processing.
+ * @param params.openMint - Whether minting is open to public after initial distribution.
+ * @returns The transaction hash resulting from the openDune operation.
  */
 export const openDune = async ({
   addressIndex,
@@ -455,15 +472,17 @@ export const mintDune = async ({
 };
 
 /**
- * Invoke the "doge_splitDune" RPC method from the snap.
+ * Invokes the "doge_splitDune" RPC method from the snap to split a dune transaction.
  *
  * @param params - The transaction parameters.
- * @param params.addressIndex - The address index.
+ * @param params.addressIndex - The index of the address to use for the transaction.
  * @param params.txhash - The transaction hash.
- * @param params.vout - The vout of the transaction.
- * @param params.decimals - The decimals of the dune.
- * @param params.amounts - The amounts of the dune.
- * @param params.addresses - The addresses of the dune.
+ * @param params.vout - The vout (output index) of the transaction.
+ * @param params.dune - The dune identifier, which was mistakenly omitted from the original docstring.
+ * @param params.decimals - The number of decimal places for the dune value.
+ * @param params.amounts - An array of amounts to distribute in the dune split.
+ * @param params.addresses - An array of addresses where the dune amounts will be sent.
+ * @returns A promise that resolves with the result of the RPC call.
  */
 export const splitDune = async ({
   addressIndex,

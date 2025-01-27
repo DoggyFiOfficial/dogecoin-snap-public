@@ -22,12 +22,7 @@ import {
   useMintTransferDRC20,
   useSendDRC20,
 } from '../hooks/useDRC20';
-import {
-  useSendDune,
-  useOpenDune,
-  useMintDunes,
-  useSplitDunes,
-} from '../hooks/useDunes';
+import { useSendDune, useOpenDune, useMintDunes } from '../hooks/useDunes';
 import { useInscribeData } from '../hooks/useInscribeData';
 
 const Container = styled.div`
@@ -192,20 +187,16 @@ const Index = () => {
     _mintDune,
   } = useMintDunes();
 
-  const {
-    error: txErrorSplitDunes,
-    isLoading: isTxLoadingSplitDunes,
-    lastTxId: lastTxIdSplitDunes,
-    _splitDunes,
-  } = useSplitDunes();
-
   const handleSwitchAccount: React.FormEventHandler<HTMLFormElement> = async (
     event,
   ) => {
     event.preventDefault();
     const form = event.currentTarget;
     const formData = new FormData(form);
-    let addressIndex = Number.parseInt(String(formData.get('addressIndex')));
+    const addressIndex = Number.parseInt(
+      String(formData.get('addressIndex')),
+      10,
+    );
     if (addressIndex < 0) {
       throw new Error('Address index MUST be an integer >= 0');
     }
@@ -310,16 +301,6 @@ const Index = () => {
     const formData = new FormData(form);
     formData.append('addressIndex', String(ADDRESSINDEX));
     _mintDune(formData);
-  };
-
-  const handleSplitDunes: React.FormEventHandler<HTMLFormElement> = async (
-    event,
-  ) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    formData.append('addressIndex', String(ADDRESSINDEX));
-    _splitDunes(formData);
   };
 
   const isSnapInstalled = Boolean(state.installedSnap);
