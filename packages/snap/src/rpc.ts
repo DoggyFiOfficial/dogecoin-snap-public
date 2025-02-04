@@ -271,17 +271,18 @@ export const makeTransaction = async ({
   // filter out any utxos with inscriptions or dunes, and enough value
   // note sometimes 100k koinu is okay, but often could be ins, safer to exclude
   const filteredUtxos = allUtxos.filter((utxo) => {
-    return utxo.inscriptions.length === 0 && utxo.dunes.length === 0 && utxo.value > 100000;
-  })
+    return (
+      utxo.inscriptions.length === 0 &&
+      utxo.dunes.length === 0 &&
+      utxo.value > 100000
+    );
+  });
 
   // sort filtered utxos from largest to smallest
   const sortedFilteredUtxos = filteredUtxos.sort((a, b) => b.value - a.value);
 
-  //filter for value to send
-  const utxos = await getUtxosForValue(
-    sortedFilteredUtxos,
-    amountInSatoshi,
-  );
+  // filter for value to send
+  const utxos = await getUtxosForValue(sortedFilteredUtxos, amountInSatoshi);
 
   if (utxos.length === 0) {
     throw new Error('No unspents for address');
@@ -331,20 +332,23 @@ export const makeTransaction = async ({
     0,
   );
 
-  let changeValue = Math.floor(totalUtxoValue - amountInSatoshi - fee - Number(tip.tip));
+  let changeValue = Math.floor(
+    totalUtxoValue - amountInSatoshi - fee - Number(tip.tip),
+  );
 
-  if (changeValue < 0) { // might need to add additional inputs...
+  if (changeValue < 0) {
+    // might need to add additional inputs...
     // filter out utxos from allUtxos
     const remUtxos = sortedFilteredUtxos.filter(
       (u) =>
         !utxos.some(
-          (used) => used.hash === u.hash && used.vout_index === u.vout_index
-        )
+          (used) => used.hash === u.hash && used.vout_index === u.vout_index,
+        ),
     );
 
     // keep adding utxos from remUtxos until balance is satisfied
     while (remUtxos.length > 0 && changeValue < 0) {
-      const utxo = remUtxos.pop()
+      const utxo = remUtxos.pop();
 
       if (utxo === undefined) {
         throw Error('Undefinied utxo in list...');
@@ -362,23 +366,25 @@ export const makeTransaction = async ({
         throw new Error(msg);
       }
 
-      psbt.addInput(
-        {
-          // @ts-expect-error this actually works fine, eslint resolving the type wrong...
-          hash: utxo.hash,
-          index: utxo.vout_index, // note this typing is specific to dogeord responses...
-          nonWitnessUtxo: Buffer.from(txHex, 'hex'),
-        }
-      )
+      psbt.addInput({
+        // @ts-expect-error this actually works fine, eslint resolving the type wrong...
+        hash: utxo.hash,
+        index: utxo.vout_index, // note this typing is specific to dogeord responses...
+        nonWitnessUtxo: Buffer.from(txHex, 'hex'),
+      });
 
       // increment change value by the amount added
-      changeValue = changeValue + Number(utxo.value);
+      changeValue += Number(utxo.value);
     }
   }
 
   // if change value is still less than 0, means there are not enough funds
-  if (changeValue < 0 ) {
-    throw Error(`Not enough funds to send ! ${amountInSatoshi / 100000000} DOGE + ${fee / 100000000} + in network fees + ${Number(tip.tip) / 100000000} in API fees`);
+  if (changeValue < 0) {
+    throw Error(
+      `Not enough funds to send ! ${amountInSatoshi / 100000000} DOGE + ${
+        fee / 100000000
+      } + in network fees + ${Number(tip.tip) / 100000000} in API fees`,
+    );
   }
 
   psbt.addOutput({
