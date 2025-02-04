@@ -56,7 +56,7 @@ export async function makeWalletFromDogeOrd(
  *
  * @param privateKey - The private key.
  * @param address - The doge address.
- * @param data - The data to inscribe, as a hex string
+ * @param data - The data to inscribe, as a hex string.
  * @param contentType - The content type of the data (e.g., plain/text).
  * @param doggyfiFee - The doggyfi fee.
  * @param doggyfiAddress - The doggyfi address.

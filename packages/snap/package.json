@@ -1,6 +1,6 @@
 {
   "name": "@doggyfi-official/kobosu",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "private": false,
   "description": "A MetaMask snap for managing Dogecoin meta assets",
   "license": "Apache-2.0",

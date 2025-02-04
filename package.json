@@ -1,12 +1,12 @@
 {
   "name": "@doggyfi-official/kobosu",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "license": "Apache-2.0",
   "author": "@rashadalh",
+  "type": "module",
   "workspaces": [
     "packages/*"
   ],
-  "type": "module",
   "scripts": {
     "build": "bun run --cwd packages/snap build",
     "format": "prettier --write 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' && eslint 'packages/**/*.{ts,tsx,js,jsx}' 'packages/**/*.{ts,tsx,js,jsx}' --fix",
