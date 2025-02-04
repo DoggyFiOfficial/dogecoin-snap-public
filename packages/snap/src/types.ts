@@ -351,7 +351,8 @@ export function assertIsMintDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -393,7 +394,8 @@ export function assertIsInscribeTransferDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -869,7 +871,8 @@ export function assertIsSendDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -899,53 +902,72 @@ export function assertIsSendDrc20Params(
 export function assertIsDeployDrc20Params(
   params: unknown,
 ): asserts params is DeployDrc20Params {
+  const paramsIsDefined = typeof params === 'object' && params !== null;
+
+  if (paramsIsDefined === false) {
+    throw Error('Params are not defined for Deploy DRC-20!');
+  }
+
   const a =
-    typeof params === 'object' &&
-    params !== null &&
+    paramsIsDefined &&
     'ticker' in params &&
-    String(params.ticker).length === 4 &&
+    String(params.ticker).length >= 1 &&
+    String(params.ticker).length <= 4 &&
     typeof params.ticker === 'string' &&
-    'name' in params &&
-    typeof params.name === 'string' &&
     'maxSupply' in params &&
     typeof params.maxSupply === 'number' &&
     params.maxSupply > 0;
 
-  let b: boolean;
-  if (
-    typeof params === 'object' &&
-    params !== null &&
-    'lim' in params &&
-    params.lim !== null &&
-    typeof params.lim === 'number' &&
-    params.lim > 0 &&
-    'decimals' in params &&
-    params.decimals !== null &&
-    typeof params.decimals === 'number' &&
-    params.decimals > 0
-  ) {
-    b = true;
-  } else if (
-    typeof params === 'object' &&
-    params !== null &&
-    'lim' in params &&
-    params.lim !== null &&
-    typeof params.lim === 'number' &&
-    params.lim > 0
-  ) {
-    b = true;
-  } else if (
-    typeof params === 'object' &&
-    params !== null &&
-    'decimals' in params &&
-    params.decimals !== null &&
-    typeof params.decimals === 'number' &&
-    params.decimals > 0
-  ) {
-    b = true;
+  const limIsPresent =
+    paramsIsDefined && 'lim' in params && params.lim !== null;
+
+  const decIsPresent =
+    paramsIsDefined && 'decimals' in params && params.decimals !== null;
+
+  let b = false;
+  // if decimals or lim is defined, we need to check their values are valid...
+  if (limIsPresent || decIsPresent) {
+    if (limIsPresent && typeof params.lim !== 'number') {
+      throw new Error(
+        `A lim was provided for deployDune but the type of lim was ${params.lim}, needs to be number!`,
+      );
+    }
+
+    if (decIsPresent && typeof params.decimals !== 'number') {
+      throw new Error(
+        `Decimals were  provided for deployDune but the type of dec was ${typeof params.decimals}, needs to be number!`,
+      );
+    }
+
+    if (
+      limIsPresent &&
+      typeof params.lim === 'number' &&
+      params.lim > 0 &&
+      decIsPresent &&
+      typeof params.decimals === 'number' &&
+      params.decimals > 0
+    ) {
+      b = true;
+    } else if (
+      !decIsPresent && // just lim is provided
+      limIsPresent &&
+      typeof params.lim === 'number' &&
+      params.lim > 0 // check if its right
+    ) {
+      b = true;
+    } else if (
+      !limIsPresent && // just dec is provided
+      decIsPresent &&
+      typeof params.decimals === 'number' &&
+      params.decimals > 0 // check if its right
+    ) {
+      b = true;
+    }
   } else {
-    b = false;
+    // if neither are defined, you can just set b = true
+    b = true;
   }
+
   let c = false;
   if (
     typeof params === 'object' &&
@@ -977,7 +999,8 @@ export function assertIsDrc20InfoParams(
     params !== null &&
     'ticker' in params &&
     typeof params.ticker === 'string' &&
-    params.ticker.length === 4
+    params.ticker.length >= 1 &&
+    params.ticker.length <= 4
   ) {
     return;
   }
