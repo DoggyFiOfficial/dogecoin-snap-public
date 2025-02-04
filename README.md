@@ -81,7 +81,7 @@ const doggyfi: WalletProvider = {
       method: "wallet_requestSnaps",
       params: {
         [snapOrigin]: {
-          version: "0.1.9", // or whatever the current / latest version is
+          version: "0.1.10", // or whatever the current / latest version is
         },
       },
     })
