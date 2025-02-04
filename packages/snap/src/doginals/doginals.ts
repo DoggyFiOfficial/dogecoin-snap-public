@@ -103,9 +103,9 @@ export async function mintDrc20(
   doggyfiFee: number,
   doggyfiAddress: string,
 ): Promise<[string[], number]> {
-  // check if ticker is 4 characters...
-  if (ticker.length !== 4) {
-    throw new Error('ticker must be 4 characters');
+  // check if ticker is between 1 to 4 characters...
+  if (ticker.length >= 1 && ticker.length <= 4) {
+    throw new Error('ticker must be at least 1 but no more than 4 characters');
   }
 
   // check if amount > 0
@@ -155,8 +155,8 @@ export async function transferDrc20(
   doggyfiAddress: string,
 ): Promise<[string[], number]> {
   // check if ticker is 4 characters...
-  if (ticker.length !== 4) {
-    throw new Error('ticker must be 4 characters');
+  if (ticker.length >= 1 && ticker.length <= 4) {
+    throw new Error('ticker must be at least 1 but no more than 4 characters');
   }
 
   // check if amount > 0
@@ -214,8 +214,8 @@ export async function mintDeploy(
   }
 
   // check if ticker is 4 characters...
-  if (ticker.length !== 4) {
-    throw new Error('ticker must be 4 characters');
+  if (ticker.length >= 1 && ticker.length <= 4) {
+    throw new Error('ticker must be at least 1 but no more than 4 characters');
   }
 
   // check if max > 0

@@ -351,7 +351,8 @@ export function assertIsMintDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -393,7 +394,8 @@ export function assertIsInscribeTransferDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -869,7 +871,8 @@ export function assertIsSendDrc20Params(
       'toAddress' in params &&
       typeof params.toAddress === 'string' &&
       'ticker' in params &&
-      String(params.ticker).length === 4 &&
+      String(params.ticker).length >= 1 &&
+      String(params.ticker).length <= 4 &&
       typeof params.ticker === 'string' &&
       'amount' in params &&
       typeof params.amount === 'number' &&
@@ -903,7 +906,8 @@ export function assertIsDeployDrc20Params(
     typeof params === 'object' &&
     params !== null &&
     'ticker' in params &&
-    String(params.ticker).length === 4 &&
+    String(params.ticker).length >= 1 &&
+    String(params.ticker).length <= 4 &&
     typeof params.ticker === 'string' &&
     'name' in params &&
     typeof params.name === 'string' &&
@@ -977,7 +981,8 @@ export function assertIsDrc20InfoParams(
     params !== null &&
     'ticker' in params &&
     typeof params.ticker === 'string' &&
-    params.ticker.length === 4
+    params.ticker.length >= 1 &&
+    params.ticker.length <= 4
   ) {
     return;
   }
